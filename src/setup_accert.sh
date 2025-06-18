@@ -28,8 +28,8 @@ fi
 # 4) Find conda
 conda_path="${workbench_path}/rte/conda"
 if [ ! -d "$conda_path" ]; then
-  echo -e "${RED}Error: conda directory not found in workbench_path${NC}"
-  exit 1
+  echo -e "${YELLOW}Warning: conda directory not found in workbench_path, skipping conda-based installation${NC}"
+  echo -e "${YELLOW}Using system pip instead${NC}"
 else
   echo -e "${GREEN}conda directory found: $conda_path${NC}"
 fi
@@ -40,17 +40,15 @@ ACCERT_DIR=$(pwd)
 echo -e "${GREEN}ACCERT_DIR set to: $ACCERT_DIR${NC}"
 
 # 6) Use the pip in conda/bin to install requirement.txt located in the parent folder of this shell script
-echo -e "${GREEN}Installing requirements from $ACCERT_DIR/../requirement.txt...${NC}"
-if [ -x "$conda_path/bin/pip" ]; then
+echo -e "${GREEN}Installing requirements from $ACCERT_DIR/../requirements.txt...${NC}"
+if [ -d "$conda_path" ] && [ -x "$conda_path/bin/pip" ]; then
   "$conda_path/bin/pip" install -r "$ACCERT_DIR/../requirements.txt"
-elif [ -x "$conda_path/Scripts/pip" ]; then
+elif [ -d "$conda_path" ] && [ -x "$conda_path/Scripts/pip" ]; then
   "$conda_path/Scripts/pip" install -r "$ACCERT_DIR/../requirements.txt"
 else
-  print_color "$RED" "Error: pip executable not found in conda directory"
+  echo -e "${YELLOW}Using system pip to install requirements${NC}"
+  pip install -r "$ACCERT_DIR/../requirements.txt"
 fi
-
-echo -e "${GREEN}Installing requirements from $ACCERT_DIR/../requirement.txt...${NC} using system pip"
-pip install -r "$ACCERT_DIR/../requirements.txt"
 
 # 7) Create another file called 'install.conf' in current folder
 echo -e "${GREEN}Creating install.conf...${NC}"

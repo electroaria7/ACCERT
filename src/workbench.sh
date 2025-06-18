@@ -4,4 +4,4 @@
 ########################################################################
 
 # Provide path to workbench-<version-number>.app/Contents for macOS
-workbench_path="/Applications/Workbench-5.4.0.app/Contents"
+workbench_path="/Applications/Workbench-5.5.1.app/Contents"
