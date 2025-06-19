@@ -7,7 +7,7 @@ YELLOW='\033[0;33m'
 NC='\033[0m' # No color
 
 # 1) Gather workbench_path from workbench.sh
-workbench_path=$(grep "workbench_path" workbench.sh | cut -d '=' -f 2 | tr -d '"')
+workbench_path=$(grep "workbench_path" "$(dirname "$0")/workbench.sh" | cut -d '=' -f 2 | tr -d '"')
 
 # 2) Check that workbench_path was retrieved
 if [ -z "$workbench_path" ]; then
@@ -54,7 +54,7 @@ fi
 echo -e "${GREEN}Creating install.conf...${NC}"
 cat > install.conf << EOL
 [INSTALL]
-PASSWD = yourpassword
+PASSWD = Wkdeogh0711#
 
 # NOTE: ALL OTHER information should be set up later 
 # INSTALL_PATH = /usr/local 
