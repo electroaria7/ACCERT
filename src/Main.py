@@ -95,6 +95,14 @@ class Accert:
             self.alg_tabl = 'fusion_alg'
             self.esc_tabl = 'escalation'
             self.fac_tabl = 'facility'
+        elif "msr" in str(xml2obj.ref_model.value).lower():
+            self.ref_model = 'msr'
+            self.acc_tabl = 'msr_acco'
+            self.cel_tabl = None
+            self.var_tabl = 'msr_varv'
+            self.alg_tabl = 'msr_alg'
+            self.esc_tabl = 'escalation'
+            self.fac_tabl = 'facility'
         elif "user_defined" in str(xml2obj.ref_model.value).lower():
             self.ref_model = 'user_defined'
             self.acc_tabl = 'user_defined_account'
