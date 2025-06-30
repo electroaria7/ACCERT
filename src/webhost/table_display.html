@@ -1180,7 +1180,7 @@
             });
 
             // Fetch and parse CSV with PapaParse
-            fetch('accel_2214_output_excel.csv')
+            fetch('init_process_data.csv')
                 .then(response => response.text())
                 .then(csvText => {
                     const results = Papa.parse(csvText, { header: true, skipEmptyLines: true });

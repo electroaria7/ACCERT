@@ -56,11 +56,11 @@ def process_output():
             extract_table_to_csv(temp_file_path)
             
             # Check if the CSV was created
-            csv_path = os.path.join(current_dir, 'accel_2214_output_excel.csv')
+            csv_path = os.path.join(current_dir, 'init_process_data.csv')
             if os.path.exists(csv_path):
                 return jsonify({
                     'success': True,
-                    'filename': 'accel_2214_output_excel.csv',
+                    'filename': 'init_process_data.csv',
                     'message': 'File processed successfully'
                 })
             else:

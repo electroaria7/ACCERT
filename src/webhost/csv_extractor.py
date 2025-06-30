@@ -18,7 +18,7 @@ def extract_table_to_csv(input_file_path):
     Args:
         input_file_path (str): The path to the input .out file.
     """
-    output_filename = "accel_2214_output_excel.csv"
+    output_filename = "init_process_data.csv"
 
     if not os.path.isfile(input_file_path):
         print(f"Error: Input file not found at '{input_file_path}'")

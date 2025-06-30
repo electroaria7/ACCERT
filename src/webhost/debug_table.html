@@ -37,7 +37,7 @@
             debugDiv.innerHTML = 'Starting to fetch CSV...';
 
             // Fetch and parse CSV with PapaParse
-            fetch('accel_2214_output_excel.csv')
+            fetch('init_process_data.csv')
                 .then(response => {
                     debugDiv.innerHTML += '<br>Response received: ' + response.status + ' ' + response.statusText;
                     if (!response.ok) {
