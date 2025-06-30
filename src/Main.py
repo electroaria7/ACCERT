@@ -1944,13 +1944,32 @@ if __name__ == "__main__":
     ins.read(initfile)
     passwd = ins.get("INSTALL","PASSWD")
 
-    conn = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password=passwd,
-    database="accert_db",
-    auth_plugin="mysql_native_password"
-    )
+    try:
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password=passwd,
+            database="accert_db",
+            use_pure=True,
+            autocommit=True
+        )
+    except mysql.connector.Error as err:
+        print(f"MySQL connection failed: {err}")
+        print("Trying alternative connection method...")
+        try:
+            conn = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password=passwd,
+                database="accert_db",
+                auth_plugin="caching_sha2_password",
+                use_pure=True,
+                autocommit=True
+            )
+        except mysql.connector.Error as err2:
+            print(f"Alternative connection also failed: {err2}")
+            print("Please check your MySQL installation and credentials.")
+            sys.exit(1)
     # conn.commit()
     # NOTE: cursor is a class that instantiates objects that can execute MySQL statements
     # only commit when you are sure that the transaction is complete

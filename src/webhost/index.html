@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!--
+    Author: Daeho Chang
+    Email: daeho.chang@anl.gov
+    Created: June 30, 2025
+    Description: ACCERT Output Processor
+  -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACCERT Output Processor</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            padding: 40px;
+            background-color: #f4f7f9;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 6px;
+            font-size: 18px;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #2980b9;
+        }
+        .btn-secondary {
+            background: #95a5a6;
+        }
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        .description {
+            color: #666;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <h1>ACCERT Output Processor</h1>
+    
+    <div class="card">
+        <h2>Upload & Process ACCERT Output</h2>
+        <p class="description">
+            Upload your <code>output.out</code> file from ACCERT and automatically extract the table data for interactive viewing.
+        </p>
+        <a href="upload_processor.html" class="btn">Upload & Process File</a>
+    </div>
+    
+    <div class="card">
+        <h2>View Results Table</h2>
+        <p class="description">
+            View the processed data in an interactive table with search, sort, and export capabilities.
+        </p>
+        <a href="table_display.html" class="btn btn-secondary">View Table</a>
+    </div>
+    
+    <div class="card">
+        <h2>Debug Table</h2>
+        <p class="description">
+            Debug version with detailed information about the CSV loading process.
+        </p>
+        <a href="debug_table.html" class="btn btn-secondary">Debug Table</a>
+    </div>
+</body>
+</html> 

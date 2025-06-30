@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+      <!--
+    Author: Daeho Chang
+    Email: daeho.chang@anl.gov
+    Created: June 30, 2025
+    Description: Interactive CSV table & chart viewer
+  -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACCERT Output Data</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f7f9;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 0.5em;
+        }
+        #controls-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        #search-container {
+            display: flex;
+            justify-content: flex-end;
+        }
+        #searchInput {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 300px;
+            font-size: 16px;
+        }
+        #downloadBtn, #groupBtn, #hierarchicalGroupBtn, #chartBtn {
+            background: #2c3e50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 18px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-left: 12px;
+            transition: background 0.2s;
+        }
+        #downloadBtn:hover, #groupBtn:hover, #hierarchicalGroupBtn:hover, #chartBtn:hover {
+            background: #34495e;
+        }
+        #groupBtn.active {
+            background: #27ae60;
+        }
+        #hierarchicalGroupBtn.active {
+            background: #27ae60;
+        }
+        #chartBtn.active {
+            background: #e74c3c;
+        }
+        .level-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .level-0 { background: #e74c3c; color: white; }
+        .level-1 { background: #f39c12; color: white; }
+        .level-2 { background: #f1c40f; color: #2c3e50; }
+        .level-3 { background: #2ecc71; color: white; }
+        .level-4 { background: #3498db; color: white; }
+        
+        .group-header {
+            background: #ecf0f1;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 12px 15px;
+            border-bottom: 2px solid #bdc3c7;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .group-header:hover {
+            background: #d5dbdb;
+        }
+        .group-content {
+            display: none;
+        }
+        .group-content.expanded {
+            display: block;
+        }
+        .group-summary {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        .chart-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        .chart-container.active {
+            display: block;
+        }
+        .chart-controls {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .chart-type-selector {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .account-selector {
+            max-width: 300px;
+            min-width: 200px;
+        }
+        .account-selector option {
+            padding: 5px;
+        }
+        .chart-options {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-top: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        .select-all-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .select-all-btn:hover {
+            background: #229954;
+        }
+        .clear-selection-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .clear-selection-btn:hover {
+            background: #c0392b;
+        }
+        .chart-info {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f4fd;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+        }
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            max-height: 60vh;
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+            table-layout: auto;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            white-space: normal;
+            overflow-wrap: break-word;
+            max-width: 220px;
+        }
+        th:first-child, td:first-child {
+            width: 40px;
+            text-align: center;
+        }
+        thead th {
+            background-color: #34495e;
+            color: #ffffff;
+            cursor: pointer;
+            position: relative;
+        }
+        thead th:after {
+            content: '\2195';
+            position: absolute;
+            right: 15px;
+            color: #bdc3c7;
+        }
+        thead th.sort-asc:after {
+            content: '\2191';
+            color: #ffffff;
+        }
+        thead th.sort-desc:after {
+            content: '\2193';
+            color: #ffffff;
+        }
+        thead th.checkbox-header:after {
+            content: '';
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tbody tr:hover {
+            background-color: #ecf0f1;
+        }
+        .group-row {
+            background-color: #ecf0f1 !important;
+            font-weight: bold;
+        }
+        .subgroup-row {
+            background-color: #f8f9fa !important;
+        }
+    </style>
+    <!-- PapaParse for robust CSV parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+
+    <h1>ACCERT Output Data</h1>
+    <div id="controls-container">
+        <div id="search-container">
+            <input type="text" id="searchInput" placeholder="Search table...">
+        </div>
+        <div>
+            <button id="groupBtn">Group by Level</button>
+            <button id="hierarchicalGroupBtn">Hierarchical Group</button>
+            <button id="chartBtn">Show Charts</button>
+            <button id="downloadBtn">Download as CSV</button>
+        </div>
+    </div>
+
+    <div class="chart-container" id="chartContainer">
+        <div class="chart-controls">
+            <label for="chartType">Chart Type:</label>
+            <select id="chartType" class="chart-type-selector">
+                <option value="pie">Pie Chart</option>
+                <option value="bar">Bar Chart</option>
+                <option value="doughnut">Doughnut Chart</option>
+            </select>
+            <label for="levelSelector">Level:</label>
+            <select id="levelSelector" class="chart-type-selector">
+                <option value="0">Level 0 (Plant)</option>
+                <option value="1">Level 1 (Major Accounts)</option>
+                <option value="2">Level 2 (Sub-accounts)</option>
+                <option value="3">Level 3 (Components)</option>
+                <option value="4">Level 4 (Sub-components)</option>
+            </select>
+            <label for="accountFilter">Filter Accounts:</label>
+            <input type="text" id="accountFilter" class="chart-type-selector" placeholder="Filter by account code or name...">
+            <label for="accountSelector">Accounts:</label>
+            <select id="accountSelector" class="chart-type-selector account-selector" multiple>
+                <option value="all">All Accounts</option>
+            </select>
+        </div>
+        <div class="chart-options">
+            <button id="selectAllBtn" class="select-all-btn">Select All</button>
+            <button id="clearSelectionBtn" class="clear-selection-btn">Clear Selection</button>
+            <button id="clearFilterBtn" class="select-all-btn" style="background: #8e44ad;">Clear Filter</button>
+            <button id="refreshChartBtn" class="select-all-btn" style="background: #16a085;">Refresh Chart</button>
+            <button id="debugBtn" class="select-all-btn" style="background: #9b59b6;">Debug Info</button>
+            <span id="selectionInfo">No accounts selected</span>
+        </div>
+        <div class="chart-info" id="chartInfo">
+            Select a level and accounts to generate a chart showing cost distribution.
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="chartCanvas" width="400" height="300"></canvas>
+        </div>
+    </div>
+
+    <table id="dataTable">
+        <thead></thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const dataTable = document.getElementById('dataTable');
+            const tableHead = dataTable.querySelector('thead');
+            const tableBody = dataTable.querySelector('tbody');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const groupBtn = document.getElementById('groupBtn');
+            const hierarchicalGroupBtn = document.getElementById('hierarchicalGroupBtn');
+            const chartBtn = document.getElementById('chartBtn');
+            const chartContainer = document.getElementById('chartContainer');
+            const chartType = document.getElementById('chartType');
+            const levelSelector = document.getElementById('levelSelector');
+            const accountFilter = document.getElementById('accountFilter');
+            const accountSelector = document.getElementById('accountSelector');
+            const selectAllBtn = document.getElementById('selectAllBtn');
+            const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+            const clearFilterBtn = document.getElementById('clearFilterBtn');
+            const refreshChartBtn = document.getElementById('refreshChartBtn');
+            const debugBtn = document.getElementById('debugBtn');
+            const selectionInfo = document.getElementById('selectionInfo');
+            const chartInfo = document.getElementById('chartInfo');
+
+            let tableData = [];
+            let filteredData = [];
+            let groupedData = {};
+            let hierarchicalData = {};
+            let sortColumn = -1;
+            let sortAsc = true;
+            let checkAllBox = null;
+            let checkedStates = [];
+            let isGrouped = false;
+            let isHierarchical = false;
+            let chartInstance = null;
+            let selectedAccounts = new Set();
+
+            function getLevelFromCode(code) {
+                // Count the number of digits to determine level
+                const digits = code.replace(/\D/g, '');
+                return digits.length - 1;
+            }
+
+            function getParentCode(code) {
+                const level = getLevelFromCode(code);
+                if (level <= 0) return null;
+                return code.substring(0, level);
+            }
+
+            function buildHierarchicalStructure(data) {
+                const hierarchy = {};
+                const sortedData = [...data].sort((a, b) => a.code_of_account.localeCompare(b.code_of_account));
+                
+                // First pass: create all nodes
+                sortedData.forEach(row => {
+                    const code = row.code_of_account;
+                    const level = getLevelFromCode(code);
+                    
+                    if (!hierarchy[code]) {
+                        hierarchy[code] = {
+                            data: row,
+                            children: [],
+                            level: level,
+                            totalCost: parseFloat(row.total_cost) || 0,
+                            expanded: false
+                        };
+                    }
+                });
+                
+                // Second pass: establish parent-child relationships
+                Object.keys(hierarchy).forEach(code => {
+                    const parentCode = getParentCode(code);
+                    if (parentCode && hierarchy[parentCode]) {
+                        hierarchy[parentCode].children.push(code);
+                        // Add child cost to parent
+                        hierarchy[parentCode].totalCost += hierarchy[code].totalCost;
+                    }
+                });
+                
+                return hierarchy;
+            }
+
+            function renderHierarchicalTable(hierarchy) {
+                tableBody.innerHTML = '';
+                checkedStates = [];
+
+                function renderNode(code, depth = 0) {
+                    const node = hierarchy[code];
+                    if (!node) return;
+
+                    const tr = document.createElement('tr');
+                    tr.className = depth === 0 ? 'group-row' : 'subgroup-row';
+                    
+                    // Level indicator
+                    const levelIndicator = document.createElement('td');
+                    levelIndicator.innerHTML = `<span class="level-indicator level-${node.level}">${node.level}</span>`;
+                    tr.appendChild(levelIndicator);
+                    
+                    // Account cell with indentation and expand/collapse
+                    const accountCell = document.createElement('td');
+                    const indent = '&nbsp;'.repeat(depth * 4);
+                    const expandIcon = node.children.length > 0 ? 
+                        (node.expanded ? '▼' : '▶') : '&nbsp;&nbsp;';
+                    
+                    accountCell.innerHTML = `
+                        <div class="group-header" onclick="toggleHierarchicalNode('${code}')" style="padding-left: ${depth * 20}px;">
+                            <span style="font-family: monospace; margin-right: 8px;">${expandIcon}</span>
+                            <span>${node.data.code_of_account} - ${node.data.account_description}</span>
+                            <span class="group-summary">$${node.totalCost.toFixed(2)}M (${node.children.length} children)</span>
+                        </div>
+                    `;
+                    tr.appendChild(accountCell);
+                    
+                    // Other columns
+                    const costCell = document.createElement('td');
+                    costCell.textContent = node.data.total_cost;
+                    tr.appendChild(costCell);
+                    
+                    const levelCell = document.createElement('td');
+                    levelCell.textContent = node.data.level;
+                    tr.appendChild(levelCell);
+                    
+                    const statusCell = document.createElement('td');
+                    statusCell.textContent = node.data.review_status;
+                    tr.appendChild(statusCell);
+                    
+                    tableBody.appendChild(tr);
+                    
+                    // Render children if expanded
+                    if (node.expanded) {
+                        node.children.forEach(childCode => {
+                            renderNode(childCode, depth + 1);
+                        });
+                    }
+                }
+                
+                // Render root nodes (nodes without parents or with level 0)
+                Object.keys(hierarchy).forEach(code => {
+                    const node = hierarchy[code];
+                    if (node.level === 0 || !getParentCode(code) || !hierarchy[getParentCode(code)]) {
+                        renderNode(code);
+                    }
+                });
+            }
+
+            function groupDataByLevel(data) {
+                const grouped = {};
+                
+                // First, sort by code to ensure proper hierarchy
+                const sortedData = [...data].sort((a, b) => a.code_of_account.localeCompare(b.code_of_account));
+                
+                sortedData.forEach(row => {
+                    const level = getLevelFromCode(row.code_of_account);
+                    const parentCode = getParentCode(row.code_of_account);
+                    
+                    if (!grouped[level]) {
+                        grouped[level] = {};
+                    }
+                    
+                    if (!grouped[level][row.code_of_account]) {
+                        grouped[level][row.code_of_account] = {
+                            header: row,
+                            children: [],
+                            totalCost: parseFloat(row.total_cost) || 0
+                        };
+                    }
+                    
+                    // Add to parent's children if exists
+                    if (parentCode && grouped[level-1] && grouped[level-1][parentCode]) {
+                        grouped[level-1][parentCode].children.push(row);
+                    }
+                });
+                
+                return grouped;
+            }
+
+            function renderGroupedTable(data) {
+                tableBody.innerHTML = '';
+                checkedStates = [];
+
+                Object.keys(data).forEach(level => {
+                    const levelData = data[level];
+                    Object.keys(levelData).forEach(code => {
+                        const group = levelData[code];
+                        
+                        // Group header
+                        const headerRow = document.createElement('tr');
+                        headerRow.className = 'group-row';
+                        
+                        const levelIndicator = document.createElement('td');
+                        levelIndicator.innerHTML = `<span class="level-indicator level-${level}">${level}</span>`;
+                        headerRow.appendChild(levelIndicator);
+                        
+                        const accountCell = document.createElement('td');
+                        accountCell.innerHTML = `
+                            <div class="group-header" onclick="toggleGroup('${code}')">
+                                <span>${group.header.code_of_account} - ${group.header.account_description}</span>
+                                <span class="group-summary">$${group.totalCost.toFixed(2)}M (${group.children.length} items)</span>
+                            </div>
+                        `;
+                        headerRow.appendChild(accountCell);
+                        
+                        // Add other columns
+                        const costCell = document.createElement('td');
+                        costCell.textContent = group.header.total_cost;
+                        headerRow.appendChild(costCell);
+                        
+                        const levelCell = document.createElement('td');
+                        levelCell.textContent = group.header.level;
+                        headerRow.appendChild(levelCell);
+                        
+                        const statusCell = document.createElement('td');
+                        statusCell.textContent = group.header.review_status;
+                        headerRow.appendChild(statusCell);
+                        
+                        tableBody.appendChild(headerRow);
+                        
+                        // Children rows
+                        group.children.forEach(child => {
+                            const childRow = document.createElement('tr');
+                            childRow.className = 'subgroup-row';
+                            childRow.style.display = 'none';
+                            childRow.dataset.parent = code;
+                            
+                            const childLevelIndicator = document.createElement('td');
+                            childLevelIndicator.innerHTML = `<span class="level-indicator level-${getLevelFromCode(child.code_of_account)}">${getLevelFromCode(child.code_of_account)}</span>`;
+                            childRow.appendChild(childLevelIndicator);
+                            
+                            Object.values(child).forEach(cell => {
+                                const td = document.createElement('td');
+                                td.textContent = cell;
+                                childRow.appendChild(td);
+                            });
+                            
+                            tableBody.appendChild(childRow);
+                        });
+                    });
+                });
+            }
+
+            window.toggleGroup = function(code) {
+                const children = document.querySelectorAll(`tr[data-parent="${code}"]`);
+                children.forEach(child => {
+                    child.style.display = child.style.display === 'none' ? 'table-row' : 'none';
+                });
+            };
+
+            window.toggleHierarchicalNode = function(code) {
+                if (hierarchicalData && hierarchicalData[code]) {
+                    hierarchicalData[code].expanded = !hierarchicalData[code].expanded;
+                    renderHierarchicalTable(hierarchicalData);
+                }
+            };
+
+            function renderTable(data) {
+                if (isHierarchical && hierarchicalData) {
+                    renderHierarchicalTable(hierarchicalData);
+                    return;
+                }
+                
+                if (isGrouped) {
+                    renderGroupedTable(groupedData);
+                    return;
+                }
+
+                tableBody.innerHTML = '';
+                checkedStates = new Array(data.length).fill(false);
+
+                data.forEach((row, rowIndex) => {
+                    const tr = document.createElement('tr');
+                    
+                    // Level indicator
+                    const levelIndicator = document.createElement('td');
+                    const level = getLevelFromCode(row.code_of_account);
+                    levelIndicator.innerHTML = `<span class="level-indicator level-${level}">${level}</span>`;
+                    tr.appendChild(levelIndicator);
+
+                    Object.values(row).forEach(cell => {
+                        const td = document.createElement('td');
+                        td.textContent = cell;
+                        tr.appendChild(td);
+                    });
+                    tableBody.appendChild(tr);
+                });
+            }
+
+            function populateAccountSelector(level) {
+                accountSelector.innerHTML = '<option value="all" selected>All Accounts</option>';
+                selectedAccounts.clear();
+                
+                const levelData = groupedData[level] || {};
+                const filterText = accountFilter.value.toLowerCase();
+                console.log(`Populating account selector for level ${level} with filter: "${filterText}"`);
+                
+                // Group accounts by their superior account
+                const superiorGroups = {};
+                
+                Object.keys(levelData).forEach(code => {
+                    const group = levelData[code];
+                    const superiorCode = getSuperiorAccount(code, level);
+                    
+                    // Apply filter
+                    const matchesFilter = !filterText || 
+                        code.toLowerCase().includes(filterText) ||
+                        group.header.account_description.toLowerCase().includes(filterText) ||
+                        superiorCode.toLowerCase().includes(filterText);
+                    
+                    if (matchesFilter) {
+                        if (!superiorGroups[superiorCode]) {
+                            superiorGroups[superiorCode] = [];
+                        }
+                        superiorGroups[superiorCode].push({ code, group });
+                    }
+                });
+                
+                // Add accounts grouped by superior account
+                Object.keys(superiorGroups).sort().forEach(superiorCode => {
+                    const accounts = superiorGroups[superiorCode];
+                    
+                    // Add superior account as a group header if it has multiple children
+                    if (accounts.length > 1) {
+                        const superiorOption = document.createElement('option');
+                        superiorOption.value = `group_${superiorCode}`;
+                        superiorOption.textContent = `📁 ${superiorCode} - Group (${accounts.length} accounts)`;
+                        superiorOption.disabled = true;
+                        superiorOption.style.fontWeight = 'bold';
+                        superiorOption.style.backgroundColor = '#f0f0f0';
+                        accountSelector.appendChild(superiorOption);
+                    }
+                    
+                    // Add individual accounts
+                    accounts.forEach(({ code, group }) => {
+                        const option = document.createElement('option');
+                        option.value = code;
+                        option.textContent = `${code} - ${group.header.account_description.substring(0, 40)}...`;
+                        accountSelector.appendChild(option);
+                    });
+                });
+                
+                updateSelectionInfo();
+            }
+
+            function getSuperiorAccount(code, currentLevel) {
+                // Find the superior account for the given code and level
+                if (currentLevel <= 1) return code;
+                
+                // Look for parent accounts in the data
+                for (let level = currentLevel - 1; level >= 0; level--) {
+                    const levelData = groupedData[level] || {};
+                    const potentialParent = code.substring(0, level + 1);
+                    if (levelData[potentialParent]) {
+                        return potentialParent;
+                    }
+                }
+                
+                return code;
+            }
+
+            function getSubaccounts(parentCode, parentLevel) {
+                const subaccounts = [];
+                const targetLevel = parentLevel + 1;
+                
+                // Skip level 4 if plotting from level 1
+                if (parentLevel === 1 && targetLevel === 4) {
+                    return [];
+                }
+                
+                // Find all accounts that are direct children of the parent
+                const targetLevelData = groupedData[targetLevel] || {};
+                
+                Object.keys(targetLevelData).forEach(code => {
+                    // Check if this account is a direct child of the parent
+                    if (code.startsWith(parentCode) && code.length === parentCode.length + 1) {
+                        subaccounts.push({
+                            code: code,
+                            group: targetLevelData[code],
+                            level: targetLevel
+                        });
+                    }
+                });
+                
+                return subaccounts;
+            }
+
+            function updateSelectionInfo() {
+                const selected = Array.from(accountSelector.selectedOptions).map(opt => opt.value);
+                if (selected.includes('all') || selected.length === 0) {
+                    selectionInfo.textContent = 'All accounts selected';
+                } else {
+                    selectionInfo.textContent = `${selected.length} account(s) selected`;
+                }
+            }
+
+            function getSelectedAccounts(level) {
+                const selected = Array.from(accountSelector.selectedOptions).map(opt => opt.value);
+                console.log('Selected options:', selected);
+                
+                // If "all" is selected or no selection, return all accounts for the level
+                if (selected.includes('all') || selected.length === 0) {
+                    const levelData = groupedData[level] || {};
+                    const filterText = accountFilter.value.toLowerCase();
+                    
+                    // Apply filter to all accounts
+                    if (filterText) {
+                        const filteredAccounts = Object.keys(levelData).filter(code => {
+                            const group = levelData[code];
+                            return code.toLowerCase().includes(filterText) ||
+                                   group.header.account_description.toLowerCase().includes(filterText);
+                        });
+                        console.log('Returning filtered accounts:', filteredAccounts);
+                        return filteredAccounts;
+                    }
+                    
+                    const allAccounts = Object.keys(levelData);
+                    console.log('Returning all accounts:', allAccounts);
+                    return allAccounts;
+                }
+                
+                // Filter out group headers and return only actual account codes
+                const actualAccounts = selected.filter(code => !code.startsWith('group_'));
+                console.log('Returning selected accounts:', actualAccounts);
+                return actualAccounts;
+            }
+
+            function createChart(level) {
+                console.log(`Creating chart for level ${level}`);
+                const levelData = groupedData[level] || {};
+                const selectedCodes = getSelectedAccounts(level);
+                
+                console.log('Level data:', levelData);
+                console.log('Selected codes:', selectedCodes);
+                
+                if (!levelData || Object.keys(levelData).length === 0) {
+                    chartInfo.textContent = 'No data available for this level.';
+                    return;
+                }
+                
+                if (selectedCodes.length === 0) {
+                    chartInfo.textContent = 'No accounts selected for this level. Please select accounts from the dropdown.';
+                    return;
+                }
+
+                const labels = [];
+                const data = [];
+                const colors = [
+                    '#e74c3c', '#f39c12', '#f1c40f', '#2ecc71', '#3498db',
+                    '#9b59b6', '#e67e22', '#1abc9c', '#34495e', '#95a5a6',
+                    '#e91e63', '#ff5722', '#ff9800', '#ffc107', '#4caf50'
+                ];
+
+                let totalCost = 0;
+                let validAccounts = 0;
+                let subaccountCount = 0;
+                
+                selectedCodes.forEach((code, index) => {
+                    if (levelData[code]) {
+                        const group = levelData[code];
+                        const cost = group.totalCost;
+                        
+                        // Check if this account has subaccounts and we should plot them instead
+                        const subaccounts = getSubaccounts(code, level);
+                        if (subaccounts.length > 0) {
+                            // Plot subaccounts instead of the parent
+                            subaccounts.forEach(subaccount => {
+                                const subCost = subaccount.group.totalCost;
+                                totalCost += subCost;
+                                validAccounts++;
+                                subaccountCount++;
+                                
+                                // Show parent-child relationship in label
+                                const parentLabel = code;
+                                const childLabel = subaccount.code;
+                                labels.push(`${parentLabel} - ${childLabel} - ${subaccount.group.header.account_description.substring(0, 25)}...`);
+                                data.push(subCost);
+                            });
+                        } else {
+                            // Plot the account itself
+                            totalCost += cost;
+                            validAccounts++;
+                            
+                            labels.push(`${code} - ${group.header.account_description.substring(0, 30)}...`);
+                            data.push(cost);
+                        }
+                    }
+                });
+
+                if (data.length === 0) {
+                    chartInfo.textContent = 'No valid data available for selected accounts.';
+                    return;
+                }
+
+                const ctx = document.getElementById('chartCanvas').getContext('2d');
+                
+                if (chartInstance) {
+                    chartInstance.destroy();
+                }
+
+                const chartTitle = subaccountCount > 0 ? 
+                    `Cost Distribution - Level ${level} + Subaccounts (${validAccounts} accounts)` :
+                    `Cost Distribution - Level ${level} (${validAccounts} accounts)`;
+
+                chartInstance = new Chart(ctx, {
+                    type: chartType.value,
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: colors.slice(0, data.length),
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: chartTitle,
+                                font: {
+                                    size: Math.min(16, window.innerWidth / 50)
+                                }
+                            },
+                            legend: {
+                                position: chartType.value === 'pie' || chartType.value === 'doughnut' ? 'right' : 'bottom',
+                                labels: {
+                                    padding: 15,
+                                    usePointStyle: true,
+                                    maxWidth: chartType.value === 'pie' || chartType.value === 'doughnut' ? 
+                                        Math.min(300, window.innerWidth / 4) : Math.min(200, window.innerWidth / 6),
+                                    font: {
+                                        size: Math.min(12, window.innerWidth / 80)
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const percentage = ((context.parsed / totalCost) * 100).toFixed(1);
+                                        return `${context.label}: $${context.parsed.toFixed(2)}M (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        layout: {
+                            padding: {
+                                top: 10,
+                                bottom: 10,
+                                right: chartType.value === 'pie' || chartType.value === 'doughnut' ? 20 : 10
+                            }
+                        }
+                    }
+                });
+
+                const subaccountInfo = subaccountCount > 0 ? 
+                    `<br>• Subaccounts Shown: ${subaccountCount}` : '';
+
+                chartInfo.innerHTML = `
+                    <strong>Chart Summary:</strong><br>
+                    • Total Cost: $${totalCost.toFixed(2)}M<br>
+                    • Accounts Shown: ${validAccounts}${subaccountInfo}<br>
+                    • Chart Type: ${chartType.value.charAt(0).toUpperCase() + chartType.value.slice(1)}
+                `;
+            }
+
+            function sortData(columnIndex) {
+                if (columnIndex === 0) return; // skip level indicator column
+                if (sortColumn === columnIndex) {
+                    sortAsc = !sortAsc;
+                } else {
+                    sortColumn = columnIndex;
+                    sortAsc = true;
+                }
+
+                const headers = Array.from(tableHead.querySelectorAll('th'));
+                headers.forEach(th => th.classList.remove('sort-asc', 'sort-desc'));
+                headers[columnIndex].classList.add(sortAsc ? 'sort-asc' : 'sort-desc');
+
+                const key = Object.keys(filteredData[0])[columnIndex - 1];
+
+                filteredData.sort((a, b) => {
+                    let valA = a[key];
+                    let valB = b[key];
+
+                    // Try numeric sort first, else fall back to string
+                    const numA = parseFloat(valA?.replace?.(/,/g, '') ?? '');
+                    const numB = parseFloat(valB?.replace?.(/,/g, '') ?? '');
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        valA = numA;
+                        valB = numB;
+                    }
+
+                    if (valA < valB) {
+                        return sortAsc ? -1 : 1;
+                    }
+                    if (valA > valB) {
+                        return sortAsc ? 1 : -1;
+                    }
+                    return 0;
+                });
+                renderTable(filteredData);
+                syncCheckAll();
+            }
+
+            function filterTable() {
+                const query = searchInput.value.toLowerCase();
+                filteredData = tableData.filter(row => {
+                    return Object.values(row).some(cell =>
+                        cell && cell.toString().toLowerCase().includes(query)
+                    );
+                });
+                renderTable(filteredData);
+                syncCheckAll();
+            }
+
+            function renderHeaders(keys) {
+                tableHead.innerHTML = '';
+                const headerRow = document.createElement('tr');
+                
+                // Level indicator header
+                const thLevel = document.createElement('th');
+                thLevel.textContent = 'Level';
+                headerRow.appendChild(thLevel);
+
+                keys.forEach((key, index) => {
+                    const th = document.createElement('th');
+                    th.textContent = key;
+                    th.addEventListener('click', () => sortData(index + 1));
+                    headerRow.appendChild(th);
+                });
+                tableHead.appendChild(headerRow);
+            }
+
+            function syncCheckAll() {
+                if (!checkAllBox) return;
+                const boxes = tableBody.querySelectorAll('input[type=checkbox]');
+                const allChecked = Array.from(boxes).every(box => box.checked);
+                const anyChecked = Array.from(boxes).some(box => box.checked);
+                checkAllBox.checked = allChecked && boxes.length > 0;
+                checkAllBox.indeterminate = !allChecked && anyChecked;
+            }
+
+            function downloadCurrentCSV() {
+                if (filteredData.length === 0) return;
+                const keys = Object.keys(filteredData[0]);
+                let csvRows = [keys.join(',')];
+                filteredData.forEach(row => {
+                    let rowStr = keys.map(key => {
+                        let v = row[key] ?? '';
+                        if (typeof v === 'string' && (v.includes(',') || v.includes('"') || v.includes('\n'))) {
+                            v = '"' + v.replace(/"/g, '""') + '"';
+                        }
+                        return v;
+                    }).join(',');
+                    csvRows.push(rowStr);
+                });
+                const csvContent = csvRows.join('\r\n');
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'filtered_table.csv';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }, 100);
+            }
+
+            // Event listeners
+            groupBtn.addEventListener('click', () => {
+                isGrouped = !isGrouped;
+                isHierarchical = false;
+                groupBtn.classList.toggle('active');
+                hierarchicalGroupBtn.classList.remove('active');
+                if (isGrouped) {
+                    groupedData = groupDataByLevel(filteredData);
+                    console.log('Grouped data created:', groupedData);
+                    // Populate account selector for current level
+                    const currentLevel = parseInt(levelSelector.value);
+                    populateAccountSelector(currentLevel);
+                }
+                renderTable(filteredData);
+            });
+
+            hierarchicalGroupBtn.addEventListener('click', () => {
+                isHierarchical = !isHierarchical;
+                isGrouped = false;
+                hierarchicalGroupBtn.classList.toggle('active');
+                groupBtn.classList.remove('active');
+                if (isHierarchical) {
+                    hierarchicalData = buildHierarchicalStructure(filteredData);
+                    console.log('Hierarchical data created:', hierarchicalData);
+                    // Populate account selector for current level
+                    const currentLevel = parseInt(levelSelector.value);
+                    populateAccountSelector(currentLevel);
+                }
+                renderTable(filteredData);
+            });
+
+            chartBtn.addEventListener('click', () => {
+                chartContainer.classList.toggle('active');
+                chartBtn.classList.toggle('active');
+                if (chartContainer.classList.contains('active') && isGrouped) {
+                    const currentLevel = parseInt(levelSelector.value);
+                    populateAccountSelector(currentLevel);
+                    createChart(currentLevel);
+                }
+            });
+
+            chartType.addEventListener('change', () => {
+                if (chartContainer.classList.contains('active') && isGrouped) {
+                    const currentLevel = parseInt(levelSelector.value);
+                    createChart(currentLevel);
+                }
+            });
+
+            levelSelector.addEventListener('change', () => {
+                console.log('Level changed to:', levelSelector.value);
+                if (chartContainer.classList.contains('active') && isGrouped) {
+                    const currentLevel = parseInt(levelSelector.value);
+                    populateAccountSelector(currentLevel);
+                    createChart(currentLevel);
+                }
+            });
+
+            accountSelector.addEventListener('change', () => {
+                console.log('Account selection changed');
+                console.log('Selected options:', Array.from(accountSelector.selectedOptions).map(opt => opt.value));
+                updateSelectionInfo();
+                if (chartContainer.classList.contains('active') && isGrouped) {
+                    const currentLevel = parseInt(levelSelector.value);
+                    console.log('Triggering chart update for level:', currentLevel);
+                    createChart(currentLevel);
+                }
+            });
+
+            accountFilter.addEventListener('input', () => {
+                console.log('Account filter changed:', accountFilter.value);
+                if (chartContainer.classList.contains('active') && isGrouped) {
+                    const currentLevel = parseInt(levelSelector.value);
+                    populateAccountSelector(currentLevel);
+                }
+            });
+
+            selectAllBtn.addEventListener('click', () => {
+                const level = parseInt(levelSelector.value);
+                const levelData = groupedData[level] || {};
+                const allCodes = Object.keys(levelData);
+                
+                // Clear current selection
+                accountSelector.innerHTML = '<option value="all">All Accounts</option>';
+                
+                // Add all accounts
+                allCodes.forEach(code => {
+                    const group = levelData[code];
+                    const option = document.createElement('option');
+                    option.value = code;
+                    option.selected = true;
+                    option.textContent = `${code} - ${group.header.account_description.substring(0, 40)}...`;
+                    accountSelector.appendChild(option);
+                });
+                
+                updateSelectionInfo();
+                if (chartContainer.classList.contains('active') && isGrouped) {
+                    createChart(level);
+                }
+            });
+
+            clearSelectionBtn.addEventListener('click', () => {
+                console.log('Clear selection clicked');
+                // Visual feedback
+                clearSelectionBtn.textContent = 'Clearing...';
+                setTimeout(() => {
+                    clearSelectionBtn.textContent = 'Clear Selection';
+                }, 500);
+                
+                // Reset to "All Accounts" selection
+                accountSelector.innerHTML = '<option value="all" selected>All Accounts</option>';
+                
+                // Re-populate with all accounts for current level
+                const currentLevel = parseInt(levelSelector.value);
+                const levelData = groupedData[currentLevel] || {};
+                Object.keys(levelData).forEach(code => {
+                    const group = levelData[code];
+                    const option = document.createElement('option');
+                    option.value = code;
+                    option.textContent = `${code} - ${group.header.account_description.substring(0, 40)}...`;
+                    accountSelector.appendChild(option);
+                });
+                
+                updateSelectionInfo();
+                if (chartContainer.classList.contains('active') && isGrouped) {
+                    createChart(currentLevel);
+                }
+            });
+
+            clearFilterBtn.addEventListener('click', () => {
+                console.log('Clear filter clicked');
+                // Visual feedback
+                clearFilterBtn.textContent = 'Clearing...';
+                setTimeout(() => {
+                    clearFilterBtn.textContent = 'Clear Filter';
+                }, 500);
+                
+                // Clear the filter input
+                accountFilter.value = '';
+                
+                // Re-populate account selector without filter
+                if (chartContainer.classList.contains('active') && isGrouped) {
+                    const currentLevel = parseInt(levelSelector.value);
+                    populateAccountSelector(currentLevel);
+                }
+            });
+
+            refreshChartBtn.addEventListener('click', () => {
+                console.log('=== REFRESH CHART CLICKED ===');
+                // Visual feedback
+                refreshChartBtn.textContent = 'Refreshing...';
+                setTimeout(() => {
+                    refreshChartBtn.textContent = 'Refresh Chart';
+                }, 1000);
+                
+                const currentLevel = parseInt(levelSelector.value);
+                console.log('Current level:', currentLevel);
+                console.log('Is grouped:', isGrouped);
+                console.log('Chart container active:', chartContainer.classList.contains('active'));
+                
+                if (isGrouped && chartContainer.classList.contains('active')) {
+                    console.log('Refreshing chart...');
+                    populateAccountSelector(currentLevel);
+                    createChart(currentLevel);
+                } else {
+                    console.log('Cannot refresh: grouped =', isGrouped, 'chart active =', chartContainer.classList.contains('active'));
+                    alert('Please enable "Group by Level" and "Show Charts" first');
+                }
+            });
+
+            debugBtn.addEventListener('click', () => {
+                console.log('=== DEBUG INFO CLICKED ===');
+                // Visual feedback
+                debugBtn.textContent = 'Debugging...';
+                setTimeout(() => {
+                    debugBtn.textContent = 'Debug Info';
+                }, 500);
+                
+                const currentLevel = parseInt(levelSelector.value);
+                console.log('Current level:', currentLevel);
+                console.log('Is grouped:', isGrouped);
+                console.log('Chart container active:', chartContainer.classList.contains('active'));
+                console.log('Grouped data keys:', Object.keys(groupedData));
+                console.log('Level data for current level:', groupedData[currentLevel]);
+                console.log('Account selector options:', accountSelector.options.length);
+                console.log('Selected accounts:', Array.from(accountSelector.selectedOptions).map(opt => opt.value));
+                console.log('Filtered data length:', filteredData.length);
+                
+                // Show debug info in chart info area
+                chartInfo.innerHTML = `
+                    <strong>Debug Information:</strong><br>
+                    • Current Level: ${currentLevel}<br>
+                    • Is Grouped: ${isGrouped}<br>
+                    • Chart Active: ${chartContainer.classList.contains('active')}<br>
+                    • Grouped Data Keys: ${Object.keys(groupedData).join(', ')}<br>
+                    • Level Data Keys: ${groupedData[currentLevel] ? Object.keys(groupedData[currentLevel]).join(', ') : 'None'}<br>
+                    • Account Selector Options: ${accountSelector.options.length}<br>
+                    • Selected Accounts: ${Array.from(accountSelector.selectedOptions).map(opt => opt.value).join(', ')}<br>
+                    • Filtered Data Length: ${filteredData.length}
+                `;
+                
+                // Ensure chart container is visible
+                if (!chartContainer.classList.contains('active')) {
+                    chartContainer.classList.add('active');
+                    chartBtn.classList.add('active');
+                }
+            });
+
+            // Fetch and parse CSV with PapaParse
+            fetch('accel_2214_output_excel.csv')
+                .then(response => response.text())
+                .then(csvText => {
+                    const results = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+                    tableData = results.data;
+                    filteredData = [...tableData];
+
+                    if (tableData.length === 0) return;
+                    renderHeaders(Object.keys(tableData[0]));
+                    renderTable(filteredData);
+                    
+                    // Initialize grouped data for charting
+                    groupedData = groupDataByLevel(filteredData);
+                    hierarchicalData = buildHierarchicalStructure(filteredData);
+                    console.log('Initial grouped data:', groupedData);
+                    console.log('Initial hierarchical data:', hierarchicalData);
+                    
+                    // Populate account selector for default level
+                    populateAccountSelector(parseInt(levelSelector.value));
+                })
+                .catch(error => {
+                    console.error("Error fetching or parsing CSV:", error);
+                    tableBody.innerHTML = `<tr><td colspan="100%">Error loading data. Please check console.</td></tr>`;
+                });
+
+            searchInput.addEventListener('keyup', filterTable);
+            downloadBtn.addEventListener('click', downloadCurrentCSV);
+
+            // Handle window resize for responsive chart
+            window.addEventListener('resize', () => {
+                if (chartInstance && chartContainer.classList.contains('active') && isGrouped) {
+                    const currentLevel = parseInt(levelSelector.value);
+                    createChart(currentLevel);
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!--
+    Author: Daeho Chang
+    Email: daeho.chang@anl.gov
+    Created: June 30, 2025
+    Description: Debug ACCERT output data
+  -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - ACCEL 2214 Output</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        #debug { background: #f0f0f0; padding: 10px; margin: 10px 0; border: 1px solid #ccc; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+    <h1>Debug - ACCEL 2214 Output Data</h1>
+    <div id="debug">Loading...</div>
+    <table id="dataTable">
+        <thead></thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const debugDiv = document.getElementById('debug');
+            const dataTable = document.getElementById('dataTable');
+            const tableHead = dataTable.querySelector('thead');
+            const tableBody = dataTable.querySelector('tbody');
+
+            debugDiv.innerHTML = 'Starting to fetch CSV...';
+
+            // Fetch and parse CSV with PapaParse
+            fetch('accel_2214_output_excel.csv')
+                .then(response => {
+                    debugDiv.innerHTML += '<br>Response received: ' + response.status + ' ' + response.statusText;
+                    if (!response.ok) {
+                        throw new Error('HTTP ' + response.status);
+                    }
+                    return response.text();
+                })
+                .then(csvText => {
+                    debugDiv.innerHTML += '<br>CSV text length: ' + csvText.length;
+                    debugDiv.innerHTML += '<br>First 200 chars: ' + csvText.substring(0, 200);
+                    
+                    const results = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+                    debugDiv.innerHTML += '<br>Parse results: ' + results.data.length + ' rows';
+                    
+                    if (results.errors.length > 0) {
+                        debugDiv.innerHTML += '<br>Parse errors: ' + JSON.stringify(results.errors);
+                    }
+
+                    const tableData = results.data;
+                    if (tableData.length === 0) {
+                        debugDiv.innerHTML += '<br>No data found!';
+                        return;
+                    }
+
+                    // Render headers
+                    const keys = Object.keys(tableData[0]);
+                    debugDiv.innerHTML += '<br>Columns: ' + keys.join(', ');
+                    
+                    const headerRow = document.createElement('tr');
+                    keys.forEach(key => {
+                        const th = document.createElement('th');
+                        th.textContent = key;
+                        headerRow.appendChild(th);
+                    });
+                    tableHead.appendChild(headerRow);
+
+                    // Render first 5 rows
+                    tableData.slice(0, 5).forEach(row => {
+                        const tr = document.createElement('tr');
+                        keys.forEach(key => {
+                            const td = document.createElement('td');
+                            td.textContent = row[key] || '';
+                            tr.appendChild(td);
+                        });
+                        tableBody.appendChild(tr);
+                    });
+
+                    debugDiv.innerHTML += '<br>Table rendered with ' + Math.min(5, tableData.length) + ' rows';
+                })
+                .catch(error => {
+                    debugDiv.innerHTML += '<br>Error: ' + error.message;
+                    console.error("Error:", error);
+                });
+        });
+    </script>
+</body>
+</html> 
