@@ -82,37 +82,41 @@ Once the server is running, open your web browser and navigate to:
 
    *Figure 1: Main ACCERT Output Processor interface*
 
-2. Click "Choose File" and select your ACCERT output file (`.out` extension)
+   ![File upload link](screenshots/ACCERT_Screenshot%20(2).png)
 
-   ![File upload interface](screenshots/ACCERT_Screenshot%20(2).png)
+   *Figure 2: Button for File upload page*
 
-   *Figure 2: File upload interface with file selection*
+2. Click **Choose File** and select your ACCERT output file (`.out` extension)
 
-3. Click "Process File" to extract the tabular data
+   ![File upload interface](screenshots/ACCERT_Screenshot%20(3).png)
 
-   ![File processing in progress](screenshots/ACCERT_Screenshot%20(3).png)
+   *Figure 3: File upload interface with file selection*
 
-   *Figure 3: File processing interface showing upload status*
+3. The "Process File" will turn green when the file is uploaded. Click "Process File" to extract the tabular data
 
-4. The system will process the file and create `init_process_data.csv`
+   ![File processing in progress](screenshots/ACCERT_Screenshot%20(4).png)
 
-   ![Processing results and success message](screenshots/ACCERT_Screenshot%20(4).png)
+   *Figure 4: File processing interface showing upload status*
 
-   *Figure 4: Processing complete with success message*
+4. The system will process the file and create `init_process_data.csv`. 
+
+   ![Processing results and success message](screenshots/ACCERT_Screenshot%20(5).png)
+
+   *Figure 5: Processing complete with success message*
 
 5. You'll see a success message when processing is complete
 
 ### Step 2: View Processed Data
 
-1. Navigate to the **Table Display** page (http://localhost:3000/table_display.html)
+1. Click on the **View Results Table** to see the results.
 
-   ![Table display page with data loaded](screenshots/ACCERT_Screenshot%20(5).png)
+   ![Table display page with data loaded](screenshots/ACCERT_Screenshot%20(6).png)
 
    *Figure 5: Table display page showing processed data*
 
 2. The page will automatically load the processed CSV data
 
-   ![Data table with search and filter options](screenshots/ACCERT_Screenshot%20(6).png)
+   ![Data table with search and filter options](screenshots/ACCERT_Screenshot%20(7).png)
 
    *Figure 6: Interactive data table with search functionality*
 
@@ -123,7 +127,7 @@ Once the server is running, open your web browser and navigate to:
    - Use the search box to filter rows by any column content
    - Results update in real-time as you type
 
-   ![Search and filtering interface](screenshots/ACCERT_Screenshot%20(7).png)
+   ![Search and filtering interface](screenshots/ACCERT_Screenshot%20(8).png)
 
    *Figure 7: Search and filtering options*
 
@@ -136,6 +140,7 @@ Once the server is running, open your web browser and navigate to:
    **Interactive Charts:**
    
    - Click "Show Charts" to enable visualization
+   - Select "Group by Level" before selecting "show Charts" for levelized items.
    - Select specific accounts to chart using the multi-select dropdown
    - Use "Select All" or "Clear Selection" for quick selection
    - Refresh charts with updated data using "Refresh Chart"
@@ -148,17 +153,14 @@ Once the server is running, open your web browser and navigate to:
 
 The processed data can be viewed in various formats:
 
-![Detailed data view with multiple columns](screenshots/ACCERT_Screenshot%20(8).png)
+![Detailed data view with multiple columns](screenshots/ACCERT_Screenshot%20(9).png)
 
-*Figure 8: Detailed data view showing comprehensive table structure*
+*Figure 8: Detailed data view showing Pie Chart of each levels*
 
-![Filtered data view](screenshots/ACCERT_Screenshot%20(9).png)
+![Filtered data view](screenshots/ACCERT_Screenshot%20(10).png)
 
-*Figure 9: Filtered data view with specific criteria applied*
+*Figure 9: Detailed data view showing Bar Chart of each levels*
 
-![Final data analysis view](screenshots/ACCERT_Screenshot%20(10).png)
-
-*Figure 10: Final data analysis view with complete dataset*
 
 ### Step 4: Debug Data Issues
 
