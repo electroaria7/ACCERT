@@ -88,7 +88,7 @@ Step 1: Upload and Process Output Files
 
 1. Go to the **Upload Processor** page (http://localhost:3000)
 
-   .. image:: ../_static/Screenshot 2025-07-19 at 21-26-54 ACCERT Output Data.png
+   .. image:: ../_static/ACCERT_Screenshot (1).png
       :alt: ACCERT Output Processor main page
       :width: 800px
       :align: center
@@ -97,7 +97,7 @@ Step 1: Upload and Process Output Files
 
 2. Click "Choose File" and select your ACCERT output file (``.out`` extension)
 
-   .. image:: ../_static/Screenshot 2025-07-19 at 21-27-05 ACCERT Output Processor.png
+   .. image:: ../_static/ACCERT_Screenshot (2).png
       :alt: File upload interface
       :width: 800px
       :align: center
@@ -106,7 +106,7 @@ Step 1: Upload and Process Output Files
 
 3. Click "Process File" to extract the tabular data
 
-   .. image:: ../_static/Screenshot 2025-07-19 at 21-27-07 ACCERT Output Processor.png
+   .. image:: ../_static/ACCERT_Screenshot (3).png
       :alt: File processing in progress
       :width: 800px
       :align: center
@@ -115,7 +115,7 @@ Step 1: Upload and Process Output Files
 
 4. The system will process the file and create ``init_process_data.csv``
 
-   .. image:: ../_static/Screenshot 2025-07-19 at 21-27-13 ACCERT Output Processor.png
+   .. image:: ../_static/ACCERT_Screenshot (4).png
       :alt: Processing results and success message
       :width: 800px
       :align: center
@@ -129,7 +129,7 @@ Step 2: View Processed Data
 
 1. Navigate to the **Table Display** page (http://localhost:3000/table_display.html)
 
-   .. image:: ../_static/Screenshot 2025-07-19 at 21-27-17 ACCERT Output Processor.png
+   .. image:: ../_static/ACCERT_Screenshot (5).png
       :alt: Table display page with data loaded
       :width: 800px
       :align: center
@@ -138,7 +138,7 @@ Step 2: View Processed Data
 
 2. The page will automatically load the processed CSV data
 
-   .. image:: ../_static/Screenshot 2025-07-19 at 21-27-23 ACCERT Output Processor.png
+   .. image:: ../_static/ACCERT_Screenshot (6).png
       :alt: Data table with search and filter options
       :width: 800px
       :align: center
@@ -152,7 +152,7 @@ Step 2: View Processed Data
    - Use the search box to filter rows by any column content
    - Results update in real-time as you type
 
-   .. image:: ../_static/Screenshot 2025-07-19 at 21-27-28 ACCERT Output Processor.png
+   .. image:: ../_static/ACCERT_Screenshot (7).png
       :alt: Search and filtering interface
       :width: 800px
       :align: center
@@ -181,21 +181,21 @@ Step 3: View Detailed Data Analysis
 
 The processed data can be viewed in various formats:
 
-.. image:: ../_static/Screenshot 2025-07-19 at 21-27-39 ACCERT Output Data.png
+.. image:: ../_static/ACCERT_Screenshot (8).png
    :alt: Detailed data view with multiple columns
    :width: 800px
    :align: center
 
 *Figure 8: Detailed data view showing comprehensive table structure*
 
-.. image:: ../_static/Screenshot 2025-07-19 at 21-27-47 ACCERT Output Data.png
+.. image:: ../_static/ACCERT_Screenshot (9).png
    :alt: Filtered data view
    :width: 800px
    :align: center
 
 *Figure 9: Filtered data view with specific criteria applied*
 
-.. image:: ../_static/Screenshot 2025-07-19 at 21-27-55 ACCERT Output Data.png
+.. image:: ../_static/ACCERT_Screenshot (10).png
    :alt: Final data analysis view
    :width: 800px
    :align: center
