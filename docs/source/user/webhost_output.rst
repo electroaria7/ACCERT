@@ -87,22 +87,77 @@ Step 1: Upload and Process Output Files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Go to the **Upload Processor** page (http://localhost:3000)
+
+   .. image:: screenshots/Screenshot 2025-07-19 at 21-26-54 ACCERT Output Data.png
+      :alt: ACCERT Output Processor main page
+      :width: 800px
+      :align: center
+
+   *Figure 1: Main ACCERT Output Processor interface*
+
 2. Click "Choose File" and select your ACCERT output file (``.out`` extension)
+
+   .. image:: screenshots/Screenshot 2025-07-19 at 21-27-05 ACCERT Output Processor.png
+      :alt: File upload interface
+      :width: 800px
+      :align: center
+
+   *Figure 2: File upload interface with file selection*
+
 3. Click "Process File" to extract the tabular data
+
+   .. image:: screenshots/Screenshot 2025-07-19 at 21-27-07 ACCERT Output Processor.png
+      :alt: File processing in progress
+      :width: 800px
+      :align: center
+
+   *Figure 3: File processing interface showing upload status*
+
 4. The system will process the file and create ``init_process_data.csv``
+
+   .. image:: screenshots/Screenshot 2025-07-19 at 21-27-13 ACCERT Output Processor.png
+      :alt: Processing results and success message
+      :width: 800px
+      :align: center
+
+   *Figure 4: Processing complete with success message*
+
 5. You'll see a success message when processing is complete
 
 Step 2: View Processed Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Navigate to the **Table Display** page (http://localhost:3000/table_display.html)
+
+   .. image:: screenshots/Screenshot 2025-07-19 at 21-27-17 ACCERT Output Processor.png
+      :alt: Table display page with data loaded
+      :width: 800px
+      :align: center
+
+   *Figure 5: Table display page showing processed data*
+
 2. The page will automatically load the processed CSV data
+
+   .. image:: screenshots/Screenshot 2025-07-19 at 21-27-23 ACCERT Output Processor.png
+      :alt: Data table with search and filter options
+      :width: 800px
+      :align: center
+
+   *Figure 6: Interactive data table with search functionality*
+
 3. Use the available features:
 
    **Search and Filter:**
    
    - Use the search box to filter rows by any column content
    - Results update in real-time as you type
+
+   .. image:: screenshots/Screenshot 2025-07-19 at 21-27-28 ACCERT Output Processor.png
+      :alt: Search and filtering interface
+      :width: 800px
+      :align: center
+
+   *Figure 7: Search and filtering options*
 
    **Data Grouping:**
    
@@ -121,7 +176,33 @@ Step 2: View Processed Data
    
    - Click "Download CSV" to save the current filtered data
 
-Step 3: Debug Data Issues
+Step 3: View Detailed Data Analysis
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The processed data can be viewed in various formats:
+
+.. image:: screenshots/Screenshot 2025-07-19 at 21-27-39 ACCERT Output Data.png
+   :alt: Detailed data view with multiple columns
+   :width: 800px
+   :align: center
+
+*Figure 8: Detailed data view showing comprehensive table structure*
+
+.. image:: screenshots/Screenshot 2025-07-19 at 21-27-47 ACCERT Output Data.png
+   :alt: Filtered data view
+   :width: 800px
+   :align: center
+
+*Figure 9: Filtered data view with specific criteria applied*
+
+.. image:: screenshots/Screenshot 2025-07-19 at 21-27-55 ACCERT Output Data.png
+   :alt: Final data analysis view
+   :width: 800px
+   :align: center
+
+*Figure 10: Final data analysis view with complete dataset*
+
+Step 4: Debug Data Issues
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you encounter issues with data processing:
