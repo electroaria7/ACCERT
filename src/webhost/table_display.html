@@ -255,6 +255,14 @@
         .calculated-column:hover {
             background-color: #d4e6f1;
         }
+        /* Hierarchical view styling */
+        .hierarchical-item {
+            cursor: pointer;
+            user-select: none;
+        }
+        .hierarchical-item:hover {
+            background-color: #f8f9fa;
+        }
         thead th {
             background-color: #34495e;
             color: #ffffff;
@@ -493,33 +501,58 @@
                     levelIndicator.innerHTML = `<span class="level-indicator level-${node.level}">${node.level}</span>`;
                     tr.appendChild(levelIndicator);
                     
-                    // Account cell with indentation and expand/collapse
-                    const accountCell = document.createElement('td');
-                    const indent = '&nbsp;'.repeat(depth * 4);
-                    const expandIcon = node.children.length > 0 ? 
-                        (node.expanded ? '▼' : '▶') : '&nbsp;&nbsp;';
+                    // Render original columns for hierarchical view
+                    const hierarchicalKeys = ['code_of_account', 'account_description'];
+                    hierarchicalKeys.forEach((key, index) => {
+                        const td = document.createElement('td');
+                        if (index === 0) { // code_of_account column with expand/collapse
+                            const expandIcon = node.children.length > 0 ? 
+                                (node.expanded ? '▼' : '▶') : '&nbsp;&nbsp;';
+                            
+                            td.innerHTML = `
+                                <div class="hierarchical-item" onclick="toggleHierarchicalNode('${code}')" style="padding-left: ${depth * 20}px;">
+                                    <span style="font-family: monospace; margin-right: 8px;">${expandIcon}</span>
+                                    <span>${node.data[key]}</span>
+                                </div>
+                            `;
+                        } else { // account_description
+                            td.textContent = node.data[key] || '';
+                            td.style.paddingLeft = `${depth * 20}px`;
+                        }
+                        tr.appendChild(td);
+                    });
                     
-                    accountCell.innerHTML = `
-                        <div class="group-header" onclick="toggleHierarchicalNode('${code}')" style="padding-left: ${depth * 20}px;">
-                            <span style="font-family: monospace; margin-right: 8px;">${expandIcon}</span>
-                            <span>${node.data.code_of_account} - ${node.data.account_description}</span>
-                            <span class="group-summary">$${node.totalCost.toFixed(2)}M (${node.children.length} children)</span>
-                        </div>
-                    `;
-                    tr.appendChild(accountCell);
-                    
-                    // Other columns
-                    const costCell = document.createElement('td');
-                    costCell.textContent = node.data.total_cost;
-                    tr.appendChild(costCell);
-                    
-                    const levelCell = document.createElement('td');
-                    levelCell.textContent = node.data.level;
-                    tr.appendChild(levelCell);
-                    
-                    const statusCell = document.createElement('td');
-                    statusCell.textContent = node.data.review_status;
-                    tr.appendChild(statusCell);
+                    // Other columns - render in same order as normal table
+                    const hierarchicalDataKeys = ['total_cost', 'level', 'review_status'];
+                    hierarchicalDataKeys.forEach(key => {
+                        const td = document.createElement('td');
+                        if (key === 'total_cost') {
+                            td.className = 'cost-column';
+                            td.textContent = `$${node.data.total_cost_formatted}M`;
+                        } else {
+                            td.textContent = node.data[key] || '';
+                        }
+                        tr.appendChild(td);
+                    });
+
+                    // Add calculated columns for hierarchical view
+                    // Weight Distribution
+                    const weightTd = document.createElement('td');
+                    weightTd.className = 'calculated-column percentage-column';
+                    weightTd.textContent = `${node.data.weight_distribution}%`;
+                    tr.appendChild(weightTd);
+
+                    // Material Cost
+                    const materialTd = document.createElement('td');
+                    materialTd.className = 'calculated-column cost-column';
+                    materialTd.textContent = `$${node.data.material_cost}M`;
+                    tr.appendChild(materialTd);
+
+                    // Labor Cost
+                    const laborTd = document.createElement('td');
+                    laborTd.className = 'calculated-column cost-column';
+                    laborTd.textContent = `$${node.data.labor_cost}M`;
+                    tr.appendChild(laborTd);
                     
                     tableBody.appendChild(tr);
                     
@@ -588,27 +621,46 @@
                         levelIndicator.innerHTML = `<span class="level-indicator level-${level}">${level}</span>`;
                         headerRow.appendChild(levelIndicator);
                         
-                        const accountCell = document.createElement('td');
-                        accountCell.innerHTML = `
-                            <div class="group-header" onclick="toggleGroup('${code}')">
-                                <span>${group.header.code_of_account} - ${group.header.account_description}</span>
-                                <span class="group-summary">$${group.totalCost.toFixed(2)}M (${group.children.length} items)</span>
-                            </div>
-                        `;
-                        headerRow.appendChild(accountCell);
-                        
-                        // Add other columns
-                        const costCell = document.createElement('td');
-                        costCell.textContent = group.header.total_cost;
-                        headerRow.appendChild(costCell);
-                        
-                        const levelCell = document.createElement('td');
-                        levelCell.textContent = group.header.level;
-                        headerRow.appendChild(levelCell);
-                        
-                        const statusCell = document.createElement('td');
-                        statusCell.textContent = group.header.review_status;
-                        headerRow.appendChild(statusCell);
+                        // Render all original columns for group headers in proper order
+                        const groupHeaderKeys = ['code_of_account', 'account_description', 'total_cost', 'level', 'review_status'];
+                        groupHeaderKeys.forEach((key, index) => {
+                            const td = document.createElement('td');
+                            if (index === 0) { // code_of_account column with expand/collapse
+                                td.innerHTML = `
+                                    <div class="group-header" onclick="toggleGroup('${code}')">
+                                        <span>${group.header.code_of_account} - ${group.header.account_description}</span>
+                                        <span class="group-summary">$${group.totalCost.toFixed(2)}M (${group.children.length} items)</span>
+                                    </div>
+                                `;
+                            } else if (index === 1) { // account_description - leave empty for group headers
+                                td.textContent = '';
+                            } else if (key === 'total_cost') {
+                                td.className = 'cost-column';
+                                td.textContent = `$${group.header.total_cost_formatted}M`;
+                            } else {
+                                td.textContent = group.header[key] || '';
+                            }
+                            headerRow.appendChild(td);
+                        });
+
+                        // Add calculated columns for grouped view
+                        // Weight Distribution
+                        const weightTd = document.createElement('td');
+                        weightTd.className = 'calculated-column percentage-column';
+                        weightTd.textContent = `${group.header.weight_distribution}%`;
+                        headerRow.appendChild(weightTd);
+
+                        // Material Cost
+                        const materialTd = document.createElement('td');
+                        materialTd.className = 'calculated-column cost-column';
+                        materialTd.textContent = `$${group.header.material_cost}M`;
+                        headerRow.appendChild(materialTd);
+
+                        // Labor Cost
+                        const laborTd = document.createElement('td');
+                        laborTd.className = 'calculated-column cost-column';
+                        laborTd.textContent = `$${group.header.labor_cost}M`;
+                        headerRow.appendChild(laborTd);
                         
                         tableBody.appendChild(headerRow);
                         
@@ -619,15 +671,42 @@
                             childRow.style.display = 'none';
                             childRow.dataset.parent = code;
                             
+                            // Level indicator
                             const childLevelIndicator = document.createElement('td');
                             childLevelIndicator.innerHTML = `<span class="level-indicator level-${getLevelFromCode(child.code_of_account)}">${getLevelFromCode(child.code_of_account)}</span>`;
                             childRow.appendChild(childLevelIndicator);
                             
-                            Object.values(child).forEach(cell => {
+                            // Render all columns for child rows (same as normal table)
+                            const childRowKeys = ['code_of_account', 'account_description', 'total_cost', 'level', 'review_status'];
+                            childRowKeys.forEach(key => {
                                 const td = document.createElement('td');
-                                td.textContent = cell;
+                                if (key === 'total_cost') {
+                                    td.className = 'cost-column';
+                                    td.textContent = `$${child.total_cost_formatted}M`;
+                                } else {
+                                    td.textContent = child[key] || '';
+                                }
                                 childRow.appendChild(td);
                             });
+
+                            // Add calculated columns for child rows
+                            // Weight Distribution
+                            const weightTd = document.createElement('td');
+                            weightTd.className = 'calculated-column percentage-column';
+                            weightTd.textContent = `${child.weight_distribution}%`;
+                            childRow.appendChild(weightTd);
+
+                            // Material Cost
+                            const materialTd = document.createElement('td');
+                            materialTd.className = 'calculated-column cost-column';
+                            materialTd.textContent = `$${child.material_cost}M`;
+                            childRow.appendChild(materialTd);
+
+                            // Labor Cost
+                            const laborTd = document.createElement('td');
+                            laborTd.className = 'calculated-column cost-column';
+                            laborTd.textContent = `$${child.labor_cost}M`;
+                            childRow.appendChild(laborTd);
                             
                             tableBody.appendChild(childRow);
                         });
