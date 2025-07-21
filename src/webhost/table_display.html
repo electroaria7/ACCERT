@@ -233,6 +233,28 @@
             width: 40px;
             text-align: center;
         }
+        /* Styling for calculated columns */
+        .calculated-column {
+            background-color: #e8f4fd;
+            border-left: 2px solid #3498db;
+        }
+        .percentage-column {
+            text-align: right;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .cost-column {
+            text-align: right;
+            font-family: monospace;
+            color: #27ae60;
+        }
+        thead th.calculated-column {
+            background-color: #2980b9;
+            color: white;
+        }
+        .calculated-column:hover {
+            background-color: #d4e6f1;
+        }
         thead th {
             background-color: #34495e;
             color: #ffffff;
@@ -292,6 +314,11 @@
             <button id="chartBtn">Show Charts</button>
             <button id="downloadBtn">Download as CSV</button>
         </div>
+    </div>
+    
+    <div style="background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+        <strong>Note:</strong> The blue-highlighted columns (Weight Distribution, Material Cost, Labor Cost) are calculated fields. 
+        Weight Distribution shows each account's percentage of total project cost. Material/Labor costs are estimated using typical nuclear plant ratios (60% material, 40% labor).
     </div>
 
     <div class="chart-container" id="chartContainer">
@@ -373,11 +400,42 @@
             let isHierarchical = false;
             let chartInstance = null;
             let selectedAccounts = new Set();
+            let totalProjectCost = 0;
 
             function getLevelFromCode(code) {
                 // Count the number of digits to determine level
                 const digits = code.replace(/\D/g, '');
                 return digits.length - 1;
+            }
+
+            function enhanceDataWithCalculatedColumns(data) {
+                // Calculate total project cost (level 0 total cost)
+                const plantDirectCost = data.find(row => row.level === '0' || parseInt(row.level) === 0);
+                if (plantDirectCost) {
+                    totalProjectCost = parseFloat(plantDirectCost.total_cost.replace(/,/g, '')) || 0;
+                }
+                
+                // Enhance each row with calculated columns
+                return data.map(row => {
+                    const totalCost = parseFloat(row.total_cost.replace(/,/g, '')) || 0;
+                    
+                    // Calculate weight distribution percentage
+                    const weightDistribution = totalProjectCost > 0 ? 
+                        ((totalCost / totalProjectCost) * 100).toFixed(2) : '0.00';
+                    
+                    // For now, split total cost into material/labor (placeholder - could be enhanced later)
+                    // Using typical nuclear plant ratios: ~60% material, ~40% labor
+                    const materialCost = (totalCost * 0.6).toFixed(2);
+                    const laborCost = (totalCost * 0.4).toFixed(2);
+                    
+                    return {
+                        ...row,
+                        weight_distribution: weightDistribution,
+                        material_cost: materialCost,
+                        labor_cost: laborCost,
+                        total_cost_formatted: totalCost.toFixed(2)
+                    };
+                });
             }
 
             function getParentCode(code) {
@@ -614,11 +672,38 @@
                     levelIndicator.innerHTML = `<span class="level-indicator level-${level}">${level}</span>`;
                     tr.appendChild(levelIndicator);
 
-                    Object.values(row).forEach(cell => {
+                    // Render original columns
+                    const originalKeys = ['code_of_account', 'account_description', 'total_cost', 'level', 'review_status'];
+                    originalKeys.forEach(key => {
                         const td = document.createElement('td');
-                        td.textContent = cell;
+                        if (key === 'total_cost') {
+                            td.className = 'cost-column';
+                            td.textContent = `$${row.total_cost_formatted}M`;
+                        } else {
+                            td.textContent = row[key] || '';
+                        }
                         tr.appendChild(td);
                     });
+
+                    // Add calculated columns
+                    // Weight Distribution
+                    const weightTd = document.createElement('td');
+                    weightTd.className = 'calculated-column percentage-column';
+                    weightTd.textContent = `${row.weight_distribution}%`;
+                    tr.appendChild(weightTd);
+
+                    // Material Cost
+                    const materialTd = document.createElement('td');
+                    materialTd.className = 'calculated-column cost-column';
+                    materialTd.textContent = `$${row.material_cost}M`;
+                    tr.appendChild(materialTd);
+
+                    // Labor Cost
+                    const laborTd = document.createElement('td');
+                    laborTd.className = 'calculated-column cost-column';
+                    laborTd.textContent = `$${row.labor_cost}M`;
+                    tr.appendChild(laborTd);
+
                     tableBody.appendChild(tr);
                 });
             }
@@ -915,18 +1000,30 @@
                 headers.forEach(th => th.classList.remove('sort-asc', 'sort-desc'));
                 headers[columnIndex].classList.add(sortAsc ? 'sort-asc' : 'sort-desc');
 
-                const key = Object.keys(filteredData[0])[columnIndex - 1];
+                // Map column index to data key
+                const columnKeys = [
+                    null, // level indicator (index 0)
+                    'code_of_account',
+                    'account_description', 
+                    'total_cost_formatted',
+                    'level',
+                    'review_status',
+                    'weight_distribution',
+                    'material_cost',
+                    'labor_cost'
+                ];
+                
+                const key = columnKeys[columnIndex];
+                if (!key) return;
 
                 filteredData.sort((a, b) => {
                     let valA = a[key];
                     let valB = b[key];
 
-                    // Try numeric sort first, else fall back to string
-                    const numA = parseFloat(valA?.replace?.(/,/g, '') ?? '');
-                    const numB = parseFloat(valB?.replace?.(/,/g, '') ?? '');
-                    if (!isNaN(numA) && !isNaN(numB)) {
-                        valA = numA;
-                        valB = numB;
+                    // Try numeric sort first for numeric columns
+                    if (['total_cost_formatted', 'weight_distribution', 'material_cost', 'labor_cost', 'level'].includes(key)) {
+                        valA = parseFloat(valA?.toString().replace(/[,$%]/g, '') ?? '0');
+                        valB = parseFloat(valB?.toString().replace(/[,$%]/g, '') ?? '0');
                     }
 
                     if (valA < valB) {
@@ -961,12 +1058,25 @@
                 thLevel.textContent = 'Level';
                 headerRow.appendChild(thLevel);
 
-                keys.forEach((key, index) => {
+                // Original columns
+                const originalHeaders = ['Code of Account', 'Account Description', 'Total Cost', 'Level', 'Review Status'];
+                originalHeaders.forEach((header, index) => {
                     const th = document.createElement('th');
-                    th.textContent = key;
+                    th.textContent = header;
                     th.addEventListener('click', () => sortData(index + 1));
                     headerRow.appendChild(th);
                 });
+
+                // Calculated columns
+                const calculatedHeaders = ['Weight Distribution (%)', 'Material Cost', 'Labor Cost'];
+                calculatedHeaders.forEach((header, index) => {
+                    const th = document.createElement('th');
+                    th.textContent = header;
+                    th.className = 'calculated-column';
+                    th.addEventListener('click', () => sortData(originalHeaders.length + index + 1));
+                    headerRow.appendChild(th);
+                });
+
                 tableHead.appendChild(headerRow);
             }
 
@@ -981,10 +1091,20 @@
 
             function downloadCurrentCSV() {
                 if (filteredData.length === 0) return;
-                const keys = Object.keys(filteredData[0]);
-                let csvRows = [keys.join(',')];
+                
+                // Define export columns in desired order
+                const exportKeys = [
+                    'code_of_account', 'account_description', 'total_cost', 'level', 'review_status',
+                    'weight_distribution', 'material_cost', 'labor_cost'
+                ];
+                const exportHeaders = [
+                    'Code of Account', 'Account Description', 'Total Cost', 'Level', 'Review Status',
+                    'Weight Distribution (%)', 'Material Cost ($M)', 'Labor Cost ($M)'
+                ];
+                
+                let csvRows = [exportHeaders.join(',')];
                 filteredData.forEach(row => {
-                    let rowStr = keys.map(key => {
+                    let rowStr = exportKeys.map(key => {
                         let v = row[key] ?? '';
                         if (typeof v === 'string' && (v.includes(',') || v.includes('"') || v.includes('\n'))) {
                             v = '"' + v.replace(/"/g, '""') + '"';
@@ -998,7 +1118,7 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'filtered_table.csv';
+                a.download = 'enhanced_accert_data.csv';
                 document.body.appendChild(a);
                 a.click();
                 setTimeout(() => {
@@ -1219,7 +1339,9 @@
                 .then(response => response.text())
                 .then(csvText => {
                     const results = Papa.parse(csvText, { header: true, skipEmptyLines: true });
-                    tableData = results.data;
+                    
+                    // Enhance data with calculated columns
+                    tableData = enhanceDataWithCalculatedColumns(results.data);
                     filteredData = [...tableData];
 
                     if (tableData.length === 0) return;
