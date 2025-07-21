@@ -19,6 +19,35 @@
             max-width: 1200px;
             margin: 0 auto;
         }
+        .header-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            gap: 20px;
+        }
+        .header-logo {
+            height: 60px;
+            width: auto;
+        }
+        .header-text {
+            flex: 1;
+        }
+        .header-title {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .header-credit {
+            color: #7f8c8d;
+            margin: 5px 0 0 0;
+            font-size: 14px;
+            font-style: italic;
+        }
         h1 {
             color: #2c3e50;
             margin-bottom: 0.5em;
@@ -153,7 +182,13 @@
     </style>
 </head>
 <body>
-    <h1>ACCERT Output Processor</h1>
+    <div class="header-container">
+        <img src="Screenshot 2025-07-20 at 16-04-47 member-argonne.webp (WEBP 이미지 500x500 픽셀).png" alt="Argonne National Laboratory" class="header-logo">
+        <div class="header-text">
+            <h1 class="header-title">ACCERT Output Processor</h1>
+            <p class="header-credit">Developed by Daeho Chang, Argonne National Laboratory</p>
+        </div>
+    </div>
     
     <div class="instructions">
         <h3>How to use:</h3>
