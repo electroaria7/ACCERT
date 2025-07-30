@@ -1,8 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!--
+    Author: Daeho Chang
+    Organization: Argonne National Laboratory
+    Created: July 30, 2025
+    Description: Data Analysis Portal - Main Entry Point
+    -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
     <title>Argonne National Laboratory - Data Analysis Portal</title>
     <style>
         body {
@@ -312,11 +320,11 @@
                 2025
             </p>
         </div>
+            </div>
     </div>
-    </div>
-    
+
     <script>
-        // Add some interactive effects
+
         document.addEventListener('DOMContentLoaded', function() {
             const cards = document.querySelectorAll('.tool-card');
             

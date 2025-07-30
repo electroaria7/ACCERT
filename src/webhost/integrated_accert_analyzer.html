@@ -3,14 +3,17 @@
 <head>
     <!--
     Author: Daeho Chang
-    Email: daeho.chang@anl.gov
-    Created: January 2, 2025
+    Organization: Argonne National Laboratory
+    Created: July 30, 2025
     Description: Integrated ACCERT Output Analyzer - Upload, Process, and Analyze
     -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
     <title>ACCERT Output Analyzer - Integrated Platform</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js" 
+            crossorigin="anonymous"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -50,6 +53,35 @@
         .navigation-links {
             display: flex;
             align-items: center;
+        }
+        .error-log {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #fff;
+            border: 1px solid #dc3545;
+            border-radius: 5px;
+            padding: 10px;
+            max-width: 300px;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+        }
+        .error-log.show {
+            display: block;
+        }
+        .error-log-header {
+            color: #dc3545;
+            font-weight: bold;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #dc3545;
+            padding-bottom: 5px;
+        }
+        .error-log-content {
+            font-size: 12px;
+            color: #333;
+            max-height: 200px;
+            overflow-y: auto;
         }
         .nav-link {
             background: #3498db;
@@ -650,8 +682,15 @@
         <thead></thead>
         <tbody></tbody>
     </table>
+    
+    <!-- Error Log Display -->
+    <div id="errorLog" class="error-log">
+        <div class="error-log-header">⚠️ Error Log</div>
+        <div class="error-log-content" id="errorLogContent"></div>
+    </div>
 
     <script>
+
         document.addEventListener('DOMContentLoaded', function() {
             // Elements
             const dropZone = document.getElementById('dropZone');
@@ -691,6 +730,182 @@
             let groupedData = {};
             let hierarchicalData = {};
             let sortColumn = -1;
+            let errorLogEntries = [];
+
+            // Error Logging System
+            function logError(errorType, details = {}) {
+                const timestamp = new Date().toISOString();
+                const errorEntry = {
+                    timestamp,
+                    type: errorType,
+                    details,
+                    userAgent: navigator.userAgent,
+                    url: window.location.href
+                };
+                
+                errorLogEntries.push(errorEntry);
+                
+                // Update error log display
+                updateErrorLogDisplay();
+                
+                // Console log for debugging (in development)
+                console.error('Application Error:', errorEntry);
+                
+                // Could send to external logging service in production
+                // sendToLoggingService(errorEntry);
+            }
+            
+            function updateErrorLogDisplay() {
+                const errorLogContent = document.getElementById('errorLogContent');
+                const errorLog = document.getElementById('errorLog');
+                
+                if (errorLogEntries.length === 0) {
+                    errorLog.classList.remove('show');
+                    return;
+                }
+                
+                errorLogContent.innerHTML = '';
+                
+                // Show only last 5 errors
+                const recentErrors = errorLogEntries.slice(-5);
+                
+                recentErrors.forEach(entry => {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.style.marginBottom = '8px';
+                    errorDiv.style.paddingBottom = '5px';
+                    errorDiv.style.borderBottom = '1px solid #f0f0f0';
+                    
+                    const timeStr = new Date(entry.timestamp).toLocaleTimeString();
+                    const errorText = document.createElement('div');
+                    
+                    const timeEl = document.createElement('strong');
+                    timeEl.textContent = timeStr;
+                    
+                    const typeEl = document.createElement('span');
+                    typeEl.style.color = '#dc3545';
+                    typeEl.textContent = entry.type;
+                    
+                    const detailsEl = document.createElement('small');
+                    detailsEl.textContent = JSON.stringify(entry.details, null, 2);
+                    
+                    errorText.appendChild(timeEl);
+                    errorText.appendChild(document.createElement('br'));
+                    errorText.appendChild(typeEl);
+                    errorText.appendChild(document.createElement('br'));
+                    errorText.appendChild(detailsEl);
+                    
+                    errorDiv.appendChild(errorText);
+                    errorLogContent.appendChild(errorDiv);
+                });
+                
+                errorLog.classList.add('show');
+                
+                // Auto-hide after 10 seconds
+                setTimeout(() => {
+                    errorLog.classList.remove('show');
+                }, 10000);
+            }
+            
+            // Comprehensive File Upload Validation
+            function validateFileUpload(file) {
+                const validationResult = {
+                    isValid: false,
+                    message: '',
+                    reason: ''
+                };
+                
+                // 1. File size validation
+                const maxFileSize = 50 * 1024 * 1024; // 50MB limit
+                if (file.size > maxFileSize) {
+                    validationResult.message = `File too large: ${formatFileSize(file.size)}. Maximum size is 50MB.`;
+                    validationResult.reason = 'FILE_TOO_LARGE';
+                    return validationResult;
+                }
+                
+                if (file.size === 0) {
+                    validationResult.message = 'File appears to be empty (0 bytes).';
+                    validationResult.reason = 'EMPTY_FILE';
+                    return validationResult;
+                }
+                
+                // 2. File extension validation
+                const allowedExtensions = ['.out', '.txt'];
+                const fileName = file.name.toLowerCase();
+                const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+                
+                if (!hasValidExtension) {
+                    validationResult.message = `Invalid file extension. Allowed: ${allowedExtensions.join(', ')}. Found: ${getFileExtension(fileName)}`;
+                    validationResult.reason = 'INVALID_EXTENSION';
+                    return validationResult;
+                }
+                
+                // 3. File type validation (MIME type)
+                const allowedTypes = ['text/plain', 'application/octet-stream', ''];
+                if (!allowedTypes.includes(file.type) && file.type !== '') {
+                    validationResult.message = `Invalid file type: ${file.type}. Expected text file.`;
+                    validationResult.reason = 'INVALID_MIME_TYPE';
+                    return validationResult;
+                }
+                
+                // 4. File name validation (security check)
+                const dangerousPatterns = [/\.exe$/i, /\.bat$/i, /\.cmd$/i, /\.scr$/i, /\.com$/i, /\.pif$/i];
+                if (dangerousPatterns.some(pattern => pattern.test(fileName))) {
+                    validationResult.message = 'Executable files are not allowed for security reasons.';
+                    validationResult.reason = 'DANGEROUS_FILE_TYPE';
+                    return validationResult;
+                }
+                
+                // 5. File name length validation
+                if (fileName.length > 255) {
+                    validationResult.message = 'File name is too long. Maximum 255 characters.';
+                    validationResult.reason = 'FILENAME_TOO_LONG';
+                    return validationResult;
+                }
+                
+                // 6. Special character validation in filename
+                const invalidChars = /[<>:"|\\?\\*\\x00-\\x1f]/;
+                if (invalidChars.test(fileName)) {
+                    validationResult.message = 'File name contains invalid characters.';
+                    validationResult.reason = 'INVALID_FILENAME_CHARS';
+                    return validationResult;
+                }
+                
+                validationResult.isValid = true;
+                validationResult.message = 'File validation passed';
+                return validationResult;
+            }
+            
+            function getFileExtension(fileName) {
+                const lastDot = fileName.lastIndexOf('.');
+                return lastDot === -1 ? '(no extension)' : fileName.substring(lastDot);
+            }
+            
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            // Global error handler
+            window.addEventListener('error', function(event) {
+                logError('JavaScript Error', {
+                    message: event.error?.message || event.message,
+                    filename: event.filename,
+                    lineno: event.lineno,
+                    colno: event.colno,
+                    stack: event.error?.stack
+                });
+            });
+            
+            // Unhandled promise rejection handler
+            window.addEventListener('unhandledrejection', function(event) {
+                logError('Unhandled Promise Rejection', {
+                    reason: event.reason,
+                    promise: event.promise.toString()
+                });
+            });
             let sortAsc = true;
             let isGrouped = false;
             let isHierarchical = false;
@@ -874,7 +1089,12 @@
                     
                     const levelIndicator = document.createElement('td');
                     const level = getLevelFromCode(row.code_of_account);
-                    levelIndicator.innerHTML = `<span class="level-indicator level-${level}">${level}</span>`;
+                    // Create safe level indicator to prevent XSS
+                    levelIndicator.innerHTML = ''; // Clear first
+                    const levelSpan = document.createElement('span');
+                    levelSpan.className = `level-indicator level-${level}`;
+                    levelSpan.textContent = level; // Safe text content
+                    levelIndicator.appendChild(levelSpan);
                     tr.appendChild(levelIndicator);
 
                     Object.values(row).forEach(cell => {
@@ -1020,6 +1240,19 @@
                     return;
                 }
 
+                // Comprehensive file validation with detailed checking
+                const validationResult = validateFileUpload(selectedFile);
+                if (!validationResult.isValid) {
+                    showStatus(validationResult.message, 'error');
+                    logError('File Validation Failed', {
+                        fileName: selectedFile.name,
+                        fileSize: selectedFile.size,
+                        fileType: selectedFile.type,
+                        reason: validationResult.reason
+                    });
+                    return;
+                }
+
                 processBtn.disabled = true;
                 processBtn.textContent = 'Processing...';
                 loadingIndicator.classList.add('active');
@@ -1027,6 +1260,11 @@
 
                 try {
                     const text = await selectedFile.text();
+                    
+                    // Basic content validation
+                    if (text.length === 0) {
+                        throw new Error('File appears to be empty');
+                    }
                     const { header, dataRows } = extractTableFromText(text);
                     tableData = processACCERTData(header, dataRows);
                     filteredData = [...tableData];
@@ -1045,7 +1283,14 @@
                         showStatus('No data found in the file', 'error');
                     }
                 } catch (error) {
-                    showStatus('Error processing file: ' + error.message, 'error');
+                    const errorMessage = 'Error processing file: ' + error.message;
+                    showStatus(errorMessage, 'error');
+                    logError('File Processing Error', {
+                        fileName: selectedFile.name,
+                        fileSize: selectedFile.size,
+                        errorMessage: error.message,
+                        errorStack: error.stack
+                    });
                 } finally {
                     processBtn.disabled = false;
                     processBtn.textContent = 'Process File';
@@ -1134,14 +1379,25 @@
                         headerTr.style.cursor = 'pointer';
                         
                         const levelTd = document.createElement('td');
-                        levelTd.innerHTML = `<span class="level-indicator level-${level}">${level}</span>`;
+                        // Create safe level indicator to prevent XSS
+                        const levelSpan = document.createElement('span');
+                        levelSpan.className = `level-indicator level-${level}`;
+                        levelSpan.textContent = level; // Safe text content
+                        levelTd.appendChild(levelSpan);
                         headerTr.appendChild(levelTd);
                         
                         const headerTd = document.createElement('td');
                         headerTd.colSpan = Object.keys(tableData[0]).length;
                         const description = getAccountDescription(group.header);
-                        headerTd.innerHTML = `<strong>${group.header.code_of_account} - ${description}</strong> 
-                                             <span class="group-summary">(Cost: ${formatCurrency(group.totalCost)}, Items: ${group.children.length})</span>`;
+                        // Create safe header content to prevent XSS
+                        const strongEl = document.createElement('strong');
+                        strongEl.textContent = `${group.header.code_of_account} - ${description}`;
+                        const summarySpan = document.createElement('span');
+                        summarySpan.className = 'group-summary';
+                        summarySpan.textContent = `(Cost: ${formatCurrency(group.totalCost)}, Items: ${group.children.length})`;
+                        headerTd.appendChild(strongEl);
+                        headerTd.appendChild(document.createTextNode(' '));
+                        headerTd.appendChild(summarySpan);
                         headerTr.appendChild(headerTd);
                         
                         tableBody.appendChild(headerTr);
@@ -1162,7 +1418,11 @@
                             
                             const childLevelTd = document.createElement('td');
                             const childLevel = getLevelFromCode(child.code_of_account);
-                            childLevelTd.innerHTML = `<span class="level-indicator level-${childLevel}">${childLevel}</span>`;
+                            // Create safe level indicator to prevent XSS
+                            const childLevelSpan = document.createElement('span');
+                            childLevelSpan.className = `level-indicator level-${childLevel}`;
+                            childLevelSpan.textContent = childLevel;
+                            childLevelTd.appendChild(childLevelSpan);
                             childTr.appendChild(childLevelTd);
                             
                             Object.values(child).forEach(cell => {
@@ -1188,14 +1448,24 @@
                     tr.style.paddingLeft = `${level * 20}px`;
                     
                     const levelTd = document.createElement('td');
-                    levelTd.innerHTML = `<span class="level-indicator level-${node.level}">${node.level}</span>`;
+                    // Create safe level indicator to prevent XSS
+                    const levelSpan = document.createElement('span');
+                    levelSpan.className = `level-indicator level-${node.level}`;
+                    levelSpan.textContent = node.level; // Safe text content
+                    levelTd.appendChild(levelSpan);
                     tr.appendChild(levelTd);
                     
                     Object.values(node.data).forEach((cell, index) => {
                         const td = document.createElement('td');
                         if (index === 0) { // First column (code)
                             td.style.paddingLeft = `${level * 20}px`;
-                            td.innerHTML = `${'&nbsp;&nbsp;'.repeat(level)}${cell}`;
+                            // Create safe HTML structure to prevent XSS
+                            const indentSpan = document.createElement('span');
+                            indentSpan.innerHTML = '&nbsp;&nbsp;'.repeat(level);
+                            const textSpan = document.createElement('span');
+                            textSpan.textContent = cell; // Safe text content
+                            td.appendChild(indentSpan);
+                            td.appendChild(textSpan);
                         } else {
                             td.textContent = cell;
                         }
@@ -1603,7 +1873,7 @@
                 const selectedOptions = Array.from(accountSelector.selectedOptions);
                 if (selectedOptions.length === 0) {
                     // If nothing selected, show prompt
-                    alert('Please select at least one account first, then click this button to select all accounts in the same parent group.');
+                    showStatus('Please select at least one account first, then click this button to select all accounts in the same parent group.', 'info');
                     return;
                 }
                 

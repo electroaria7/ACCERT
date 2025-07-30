@@ -1,10 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!--
+    Author: Daeho Chang
+    Organization: Argonne National Laboratory
+    Created: July 30, 2025
+    Description: MSBR Cost Analysis - Interactive Table & Charts
+    -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
     <title>MSBR Cost Analysis - Interactive Table & Charts</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js" 
+            crossorigin="anonymous"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -44,6 +53,35 @@
         .navigation-links {
             display: flex;
             align-items: center;
+        }
+        .error-log {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #fff;
+            border: 1px solid #dc3545;
+            border-radius: 5px;
+            padding: 10px;
+            max-width: 300px;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+        }
+        .error-log.show {
+            display: block;
+        }
+        .error-log-header {
+            color: #dc3545;
+            font-weight: bold;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #dc3545;
+            padding-bottom: 5px;
+        }
+        .error-log-content {
+            font-size: 12px;
+            color: #333;
+            max-height: 200px;
+            overflow-y: auto;
         }
         .nav-link {
             background: #3498db;
@@ -610,8 +648,15 @@
         <thead></thead>
         <tbody></tbody>
     </table>
+    
+    <!-- Error Log Display -->
+    <div id="errorLog" class="error-log">
+        <div class="error-log-header">⚠️ Error Log</div>
+        <div class="error-log-content" id="errorLogContent"></div>
+    </div>
 
     <script>
+
         document.addEventListener('DOMContentLoaded', function() {
             const fileInput = document.getElementById('fileInput');
             const loadDataBtn = document.getElementById('loadDataBtn');
@@ -645,6 +690,137 @@
             let groupedData = {};
             let hierarchicalData = {};
             let sortColumn = -1;
+            let errorLogEntries = [];
+
+            // Error Logging System
+            function logError(errorType, details = {}) {
+                const timestamp = new Date().toISOString();
+                const errorEntry = {
+                    timestamp,
+                    type: errorType,
+                    details,
+                    userAgent: navigator.userAgent,
+                    url: window.location.href
+                };
+                
+                errorLogEntries.push(errorEntry);
+                updateErrorLogDisplay();
+                console.error('Application Error:', errorEntry);
+            }
+            
+            function updateErrorLogDisplay() {
+                const errorLogContent = document.getElementById('errorLogContent');
+                const errorLog = document.getElementById('errorLog');
+                
+                if (errorLogEntries.length === 0) {
+                    errorLog.classList.remove('show');
+                    return;
+                }
+                
+                errorLogContent.innerHTML = '';
+                const recentErrors = errorLogEntries.slice(-5);
+                
+                recentErrors.forEach(entry => {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.style.marginBottom = '8px';
+                    errorDiv.style.paddingBottom = '5px';
+                    errorDiv.style.borderBottom = '1px solid #f0f0f0';
+                    
+                    const timeStr = new Date(entry.timestamp).toLocaleTimeString();
+                    const errorText = document.createElement('div');
+                    
+                    const timeEl = document.createElement('strong');
+                    timeEl.textContent = timeStr;
+                    
+                    const typeEl = document.createElement('span');
+                    typeEl.style.color = '#dc3545';
+                    typeEl.textContent = entry.type;
+                    
+                    const detailsEl = document.createElement('small');
+                    detailsEl.textContent = JSON.stringify(entry.details, null, 2);
+                    
+                    errorText.appendChild(timeEl);
+                    errorText.appendChild(document.createElement('br'));
+                    errorText.appendChild(typeEl);
+                    errorText.appendChild(document.createElement('br'));
+                    errorText.appendChild(detailsEl);
+                    
+                    errorDiv.appendChild(errorText);
+                    errorLogContent.appendChild(errorDiv);
+                });
+                
+                errorLog.classList.add('show');
+                setTimeout(() => errorLog.classList.remove('show'), 10000);
+            }
+            
+            // File Upload Validation for CSV
+            function validateCSVUpload(file) {
+                const validationResult = {
+                    isValid: false,
+                    message: '',
+                    reason: ''
+                };
+                
+                // File size validation
+                const maxFileSize = 10 * 1024 * 1024; // 10MB limit for CSV
+                if (file.size > maxFileSize) {
+                    validationResult.message = `File too large: ${formatFileSize(file.size)}. Maximum size is 10MB.`;
+                    validationResult.reason = 'FILE_TOO_LARGE';
+                    return validationResult;
+                }
+                
+                if (file.size === 0) {
+                    validationResult.message = 'File appears to be empty (0 bytes).';
+                    validationResult.reason = 'EMPTY_FILE';
+                    return validationResult;
+                }
+                
+                // File extension validation
+                const fileName = file.name.toLowerCase();
+                if (!fileName.endsWith('.csv')) {
+                    validationResult.message = 'Invalid file extension. Only .csv files are allowed.';
+                    validationResult.reason = 'INVALID_EXTENSION';
+                    return validationResult;
+                }
+                
+                // File type validation
+                const allowedTypes = ['text/csv', 'application/vnd.ms-excel', 'text/plain', ''];
+                if (!allowedTypes.includes(file.type) && file.type !== '') {
+                    validationResult.message = `Invalid file type: ${file.type}. Expected CSV file.`;
+                    validationResult.reason = 'INVALID_MIME_TYPE';
+                    return validationResult;
+                }
+                
+                validationResult.isValid = true;
+                validationResult.message = 'File validation passed';
+                return validationResult;
+            }
+            
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            // Global error handler
+            window.addEventListener('error', function(event) {
+                logError('JavaScript Error', {
+                    message: event.error?.message || event.message,
+                    filename: event.filename,
+                    lineno: event.lineno,
+                    colno: event.colno,
+                    stack: event.error?.stack
+                });
+            });
+            
+            window.addEventListener('unhandledrejection', function(event) {
+                logError('Unhandled Promise Rejection', {
+                    reason: event.reason,
+                    promise: event.promise.toString()
+                });
+            });
             let sortAsc = true;
             let isGrouped = false;
             let isHierarchical = false;
@@ -941,7 +1117,11 @@
                 
                 // Level indicator
                 const levelIndicator = document.createElement('td');
-                levelIndicator.innerHTML = `<span class="level-indicator level-${depth}">${depth}</span>`;
+                // Create safe level indicator to prevent XSS
+                const levelSpan = document.createElement('span');
+                levelSpan.className = `level-indicator level-${depth}`;
+                levelSpan.textContent = depth; // Safe text content
+                levelIndicator.appendChild(levelSpan);
                 row.appendChild(levelIndicator);
                 
                 // Account and item
@@ -1082,7 +1262,11 @@
                     headerRow.className = 'group-row';
                     
                     const levelIndicator = document.createElement('td');
-                    levelIndicator.innerHTML = '<span class="level-indicator level-0">0</span>';
+                    // Create safe level indicator to prevent XSS
+                    const levelSpan = document.createElement('span');
+                    levelSpan.className = 'level-indicator level-0';
+                    levelSpan.textContent = '0'; // Safe text content
+                    levelIndicator.appendChild(levelSpan);
                     headerRow.appendChild(levelIndicator);
                     
                     const categoryCell = document.createElement('td');
@@ -1137,7 +1321,11 @@
                         childRow.dataset.parent = category;
                         
                         const childLevelIndicator = document.createElement('td');
-                        childLevelIndicator.innerHTML = '<span class="level-indicator level-1">1</span>';
+                        // Create safe level indicator to prevent XSS
+                        const childLevelSpan = document.createElement('span');
+                        childLevelSpan.className = 'level-indicator level-1';
+                        childLevelSpan.textContent = '1'; // Safe text content
+                        childLevelIndicator.appendChild(childLevelSpan);
                         childRow.appendChild(childLevelIndicator);
                         
                         // Account No.
@@ -1750,6 +1938,19 @@
                     return;
                 }
                 
+                // Validate file before processing
+                const validationResult = validateCSVUpload(file);
+                if (!validationResult.isValid) {
+                    fileStatus.textContent = validationResult.message;
+                    logError('File Validation Failed', {
+                        fileName: file.name,
+                        fileSize: file.size,
+                        fileType: file.type,
+                        reason: validationResult.reason
+                    });
+                    return;
+                }
+                
                 // Show loading indicator
                 loadingIndicator.classList.add('active');
                 loadDataBtn.disabled = true;
@@ -1771,6 +1972,12 @@
                         fileStatus.textContent = `✅ Successfully loaded ${tableData.length} items from ${file.name}`;
                     } catch (error) {
                         fileStatus.textContent = `❌ Error loading file: ${error.message}`;
+                        logError('CSV Processing Error', {
+                            fileName: file.name,
+                            fileSize: file.size,
+                            errorMessage: error.message,
+                            errorStack: error.stack
+                        });
                     } finally {
                         // Hide loading indicator
                         loadingIndicator.classList.remove('active');

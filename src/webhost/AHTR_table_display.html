@@ -1,10 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!--
+    Author: Daeho Chang
+    Organization: Argonne National Laboratory
+    Created: July 30, 2025
+    Description: AHTR Cost Analysis - Interactive Table & Charts
+    -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
     <title>AHTR Cost Analysis - Interactive Table & Charts</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js" 
+            crossorigin="anonymous"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -44,6 +53,35 @@
         .navigation-links {
             display: flex;
             align-items: center;
+        }
+        .error-log {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #fff;
+            border: 1px solid #dc3545;
+            border-radius: 5px;
+            padding: 10px;
+            max-width: 300px;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+        }
+        .error-log.show {
+            display: block;
+        }
+        .error-log-header {
+            color: #dc3545;
+            font-weight: bold;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #dc3545;
+            padding-bottom: 5px;
+        }
+        .error-log-content {
+            font-size: 12px;
+            color: #333;
+            max-height: 200px;
+            overflow-y: auto;
         }
         .nav-link {
             background: #3498db;
@@ -617,6 +655,7 @@
     </table>
 
     <script>
+
         document.addEventListener('DOMContentLoaded', function() {
             const fileInput = document.getElementById('fileInput');
             const loadDataBtn = document.getElementById('loadDataBtn');
@@ -986,7 +1025,11 @@
                 
                 // Level indicator
                 const levelIndicator = document.createElement('td');
-                levelIndicator.innerHTML = `<span class="level-indicator level-${depth}">${depth}</span>`;
+                // Create safe level indicator to prevent XSS
+                const levelSpan = document.createElement('span');
+                levelSpan.className = `level-indicator level-${depth}`;
+                levelSpan.textContent = depth; // Safe text content
+                levelIndicator.appendChild(levelSpan);
                 row.appendChild(levelIndicator);
                 
                 // Account and item
@@ -1136,7 +1179,11 @@
                     headerRow.className = 'group-row';
                     
                     const levelIndicator = document.createElement('td');
-                    levelIndicator.innerHTML = '<span class="level-indicator level-0">0</span>';
+                    // Create safe level indicator to prevent XSS
+                    const levelSpan = document.createElement('span');
+                    levelSpan.className = 'level-indicator level-0';
+                    levelSpan.textContent = '0'; // Safe text content
+                    levelIndicator.appendChild(levelSpan);
                     headerRow.appendChild(levelIndicator);
                     
                     const categoryCell = document.createElement('td');
@@ -1197,7 +1244,11 @@
                         childRow.dataset.parent = category;
                         
                         const childLevelIndicator = document.createElement('td');
-                        childLevelIndicator.innerHTML = '<span class="level-indicator level-1">1</span>';
+                        // Create safe level indicator to prevent XSS
+                        const childLevelSpan = document.createElement('span');
+                        childLevelSpan.className = 'level-indicator level-1';
+                        childLevelSpan.textContent = '1'; // Safe text content
+                        childLevelIndicator.appendChild(childLevelSpan);
                         childRow.appendChild(childLevelIndicator);
                         
                         // Account No.
