@@ -11,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" 
           content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
-    <title>MSBR Cost Analysis - Interactive Table & Charts</title>
+    <title>ACCERT-Viewer: MSBR Cost Analysis</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js" 
             crossorigin="anonymous"></script>
     <style>
@@ -499,11 +499,23 @@
             letter-spacing: 0.5px;
         }
         
-        /* Add icons to metric cards */
-        .metric-card:nth-child(1) .metric-value::before { content: "💰 "; }
-        .metric-card:nth-child(2) .metric-value::before { content: "🏗️ "; }
-        .metric-card:nth-child(3) .metric-value::before { content: "👷 "; }
-        .metric-card:nth-child(4) .metric-value::before { content: "📊 "; }
+        /* Add icons to primary metric cards */
+        .metrics-summary:not(.secondary-metrics) .metric-card:nth-child(1) .metric-value::before { content: "💰 "; }
+        .metrics-summary:not(.secondary-metrics) .metric-card:nth-child(2) .metric-value::before { content: "🏗️ "; }
+        .metrics-summary:not(.secondary-metrics) .metric-card:nth-child(3) .metric-value::before { content: "👷 "; }
+        .metrics-summary:not(.secondary-metrics) .metric-card:nth-child(4) .metric-value::before { content: "📊 "; }
+        
+        /* Add icons to secondary metric cards */
+        .secondary-metrics .metric-card:nth-child(1) .metric-value::before { content: "⚡ "; }
+        .secondary-metrics .metric-card:nth-child(2) .metric-value::before { content: "🔥 "; }
+        .secondary-metrics .metric-card:nth-child(3) .metric-value::before { content: "💲 "; }
+        
+        /* Secondary metrics styling */
+        .secondary-metrics {
+            margin-top: 15px;
+            border-top: 2px solid #ecf0f1;
+            padding-top: 15px;
+        }
         
         /* Tooltip styling for cost breakdowns */
         .cost-tooltip {
@@ -545,7 +557,7 @@
     <div class="header-container">
         <img src="argonne logo.png" alt="Argonne National Laboratory" class="header-logo">
         <div class="header-text">
-            <h1 class="header-title">MSBR Cost Analysis - Interactive Table & Charts</h1>
+            <h1 class="header-title">MSBR Cost Analysis - ACCERT-Viewer</h1>
             <p class="header-credit">Developed by Daeho Chang, Argonne National Laboratory</p>
         </div>
         <div class="navigation-links">
@@ -563,6 +575,7 @@
         </div>
     </div>
 
+    <!-- Primary Cost Metrics -->
     <div class="metrics-summary" id="metricsSummary" style="display: none;">
         <div class="metric-card">
             <div class="metric-value" id="totalCost">$0</div>
@@ -579,6 +592,22 @@
         <div class="metric-card">
             <div class="metric-value" id="itemCount">0</div>
             <div class="metric-label">Number of Items</div>
+        </div>
+    </div>
+
+    <!-- Power Output & Efficiency Metrics -->
+    <div class="metrics-summary secondary-metrics" id="secondaryMetrics" style="display: none;">
+        <div class="metric-card">
+            <div class="metric-value" id="electricalOutput">1000 MW</div>
+            <div class="metric-label">Electrical Output</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value" id="thermalOutput">2250 MW</div>
+            <div class="metric-label">Thermal Output</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value" id="costPerKW">$0/kW</div>
+            <div class="metric-label">Cost per kW</div>
         </div>
     </div>
 
@@ -1187,6 +1216,14 @@
                 totalPercentCell.textContent = `${totalPercent.toFixed(2)}%`;
                 row.appendChild(totalPercentCell);
                 
+                // Confidence Level (1 * Total %)
+                const confidenceCell = document.createElement('td');
+                const confidenceLevel = totalPercent * 1.0; // 1 * total%
+                confidenceCell.textContent = `${confidenceLevel.toFixed(2)}%`;
+                confidenceCell.style.color = '#2ecc71';
+                confidenceCell.style.fontWeight = '600';
+                row.appendChild(confidenceCell);
+                
                 // Category
                 const categoryCell = document.createElement('td');
                 categoryCell.textContent = node.data['Category'];
@@ -1219,7 +1256,13 @@
                 document.getElementById('totalLabor').textContent = `$${(totalLabor / 1000).toFixed(1)}M`;
                 document.getElementById('itemCount').textContent = itemCount;
                 
+                // Calculate cost per kW (electrical output is 1000 MW)
+                const electricalOutputKW = 1000 * 1000; // 1000 MW = 1,000,000 kW
+                const costPerKW = totalCost / electricalOutputKW;
+                document.getElementById('costPerKW').textContent = `$${costPerKW.toFixed(2)}/kW`;
+                
                 metricsSummary.style.display = 'grid';
+                document.getElementById('secondaryMetrics').style.display = 'grid';
             }
 
             function groupDataByCategory(data) {
@@ -1311,6 +1354,14 @@
                     totalPercentCell.textContent = `${totalPercent.toFixed(2)}%`;
                     headerRow.appendChild(totalPercentCell);
                     
+                    // Confidence Level (1 * Total %)
+                    const confidenceCell = document.createElement('td');
+                    const confidenceLevel = totalPercent * 1.0; // 1 * total%
+                    confidenceCell.textContent = `${confidenceLevel.toFixed(2)}%`;
+                    confidenceCell.style.color = '#2ecc71';
+                    confidenceCell.style.fontWeight = '600';
+                    headerRow.appendChild(confidenceCell);
+                    
                     tableBody.appendChild(headerRow);
                     
                     // Children rows
@@ -1385,6 +1436,14 @@
                         const childTotalPercent = totalCost > 0 ? (child['Total'] / totalCost * 100) : 0;
                         childTotalPercentCell.textContent = `${childTotalPercent.toFixed(2)}%`;
                         childRow.appendChild(childTotalPercentCell);
+                        
+                        // Confidence Level (1 * Total %)
+                        const childConfidenceCell = document.createElement('td');
+                        const childConfidenceLevel = childTotalPercent * 1.0; // 1 * total%
+                        childConfidenceCell.textContent = `${childConfidenceLevel.toFixed(2)}%`;
+                        childConfidenceCell.style.color = '#2ecc71';
+                        childConfidenceCell.style.fontWeight = '600';
+                        childRow.appendChild(childConfidenceCell);
                         
                         // Category
                         const childCategoryCell = document.createElement('td');
@@ -1483,6 +1542,15 @@
                     totalPercentCell.textContent = `${totalPercent.toFixed(1)}%`;
                     tr.appendChild(totalPercentCell);
                     
+                    // Confidence Level (1 * Total %)
+                    const confidenceCell = document.createElement('td');
+                    confidenceCell.className = 'percentage-column formatted-number';
+                    const confidenceLevel = totalPercent * 1.0; // 1 * total%
+                    confidenceCell.textContent = `${confidenceLevel.toFixed(1)}%`;
+                    confidenceCell.style.color = '#2ecc71';
+                    confidenceCell.style.fontWeight = '600';
+                    tr.appendChild(confidenceCell);
+                    
                     // Category
                     const categoryCell = document.createElement('td');
                     categoryCell.className = 'category-column';
@@ -1503,7 +1571,7 @@
                 tableHead.innerHTML = '';
                 const headerRow = document.createElement('tr');
                 
-                const headers = ['Level', 'Account No.', 'Item', 'Materials', 'Labor', 'Total', 'Materials %', 'Labor %', 'Total %', 'Category', 'Subcategory'];
+                const headers = ['Level', 'Account No.', 'Item', 'Materials', 'Labor', 'Total', 'Materials %', 'Labor %', 'Total %', 'Confidence Level', 'Category', 'Subcategory'];
                 
                 headers.forEach((header, index) => {
                     const th = document.createElement('th');
