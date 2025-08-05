@@ -11,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" 
           content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
-    <title>ACCERT-Viewer: ACCERT Output Analyzer</title>
+    <title>ACCERT-Plus: ACCERT Output Analyzer</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js" 
             crossorigin="anonymous"></script>
     <style>
@@ -501,9 +501,11 @@
         }
         .metrics-summary {
             display: none;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: 600px 1fr 1fr 1fr; /* Fixed width for total cost, flexible for others */
+            grid-template-rows: auto auto;
             gap: 15px;
             margin-bottom: 20px;
+            align-items: stretch;
         }
         .metric-card {
             background: white;
@@ -511,6 +513,54 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             text-align: center;
+        }
+        
+        /* Total Cost Card - spans 2 rows on the left */
+        .total-cost-card {
+            grid-row: 1 / 3;
+            grid-column: 1 / 2;
+            min-height: 250px;
+            padding: 40px 30px;
+            border: 3px solid #3498db;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        /* Other metric cards positioned in 3x2 grid on the right */
+        .metrics-summary .metric-card:nth-child(2) {
+            grid-row: 1 / 2;
+            grid-column: 2 / 3;
+        }
+        .metrics-summary .metric-card:nth-child(3) {
+            grid-row: 1 / 2;
+            grid-column: 3 / 4;
+        }
+        .metrics-summary .metric-card:nth-child(4) {
+            grid-row: 1 / 2;
+            grid-column: 4 / 5;
+        }
+        .metrics-summary .metric-card:nth-child(5) {
+            grid-row: 2 / 3;
+            grid-column: 2 / 3;
+        }
+        .metrics-summary .metric-card:nth-child(6) {
+            grid-row: 2 / 3;
+            grid-column: 3 / 4;
+        }
+        .metrics-summary .metric-card:nth-child(7) {
+            grid-row: 2 / 3;
+            grid-column: 4 / 5;
+        }
+        
+        /* Enhanced styling for total cost card */
+        .total-cost-card .metric-value {
+            font-size: 3.5em;
+            color: #2c3e50;
+        }
+        .total-cost-card .metric-label {
+            font-size: 1.1em;
+            color: #34495e;
         }
         .metric-value {
             font-size: 2.2em;
@@ -528,23 +578,55 @@
             letter-spacing: 0.5px;
         }
         
-        /* Add icons to primary metric cards */
-        .metrics-summary:not(.secondary-metrics) .metric-card:nth-child(1) .metric-value::before { content: "💰 "; }
-        .metrics-summary:not(.secondary-metrics) .metric-card:nth-child(2) .metric-value::before { content: "🏗️ "; }
-        .metrics-summary:not(.secondary-metrics) .metric-card:nth-child(3) .metric-value::before { content: "📊 "; }
-        .metrics-summary:not(.secondary-metrics) .metric-card:nth-child(4) .metric-value::before { content: "⚖️ "; }
-        
-        /* Add icons to secondary metric cards */
-        .secondary-metrics .metric-card:nth-child(1) .metric-value::before { content: "⚡ "; }
-        .secondary-metrics .metric-card:nth-child(2) .metric-value::before { content: "🔥 "; }
-        .secondary-metrics .metric-card:nth-child(3) .metric-value::before { content: "💲 "; }
-        
-        /* Secondary metrics styling */
-        .secondary-metrics {
-            margin-top: 15px;
-            border-top: 2px solid #ecf0f1;
-            padding-top: 15px;
+        /* Responsive layout for smaller screens */
+        @media (max-width: 1200px) {
+            .metrics-summary {
+                grid-template-columns: 500px 1fr 1fr; /* Smaller but still wider total cost card */
+                grid-template-rows: auto auto auto;
+            }
+            
+            .total-cost-card {
+                grid-row: 1 / 3 !important;
+                grid-column: 1 / 2 !important;
+                min-height: 200px !important;
+            }
+            
+            .metrics-summary .metric-card:nth-child(2) { grid-row: 1; grid-column: 2; }
+            .metrics-summary .metric-card:nth-child(3) { grid-row: 1; grid-column: 3; }
+            .metrics-summary .metric-card:nth-child(4) { grid-row: 2; grid-column: 2; }
+            .metrics-summary .metric-card:nth-child(5) { grid-row: 2; grid-column: 3; }
+            .metrics-summary .metric-card:nth-child(6) { grid-row: 3; grid-column: 2; }
+            .metrics-summary .metric-card:nth-child(7) { grid-row: 3; grid-column: 3; }
         }
+        
+        @media (max-width: 768px) {
+            .metrics-summary {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(7, auto);
+            }
+            
+            .total-cost-card {
+                grid-row: 1 / 2 !important;
+                grid-column: 1 / 2 !important;
+                min-height: 150px !important;
+            }
+            
+            .metrics-summary .metric-card:nth-child(2) { grid-row: 2; grid-column: 1; }
+            .metrics-summary .metric-card:nth-child(3) { grid-row: 3; grid-column: 1; }
+            .metrics-summary .metric-card:nth-child(4) { grid-row: 4; grid-column: 1; }
+            .metrics-summary .metric-card:nth-child(5) { grid-row: 5; grid-column: 1; }
+            .metrics-summary .metric-card:nth-child(6) { grid-row: 6; grid-column: 1; }
+            .metrics-summary .metric-card:nth-child(7) { grid-row: 7; grid-column: 1; }
+        }
+        
+        /* Add icons to metric cards */
+        .metrics-summary .metric-card:nth-child(1) .metric-value::before { content: "💰 "; }
+        .metrics-summary .metric-card:nth-child(2) .metric-value::before { content: "📊 "; }
+        .metrics-summary .metric-card:nth-child(3) .metric-value::before { content: "📈 "; }
+        .metrics-summary .metric-card:nth-child(4) .metric-value::before { content: "⚖️ "; }
+        .metrics-summary .metric-card:nth-child(5) .metric-value::before { content: "⚡ "; }
+        .metrics-summary .metric-card:nth-child(6) .metric-value::before { content: "🔥 "; }
+        .metrics-summary .metric-card:nth-child(7) .metric-value::before { content: "💲 "; }
         .loading-indicator {
             display: none;
             align-items: center;
@@ -574,7 +656,7 @@
     <div class="header-container">
         <img src="argonne logo.png" alt="Argonne National Laboratory" class="header-logo">
         <div class="header-text">
-            <h1 class="header-title">ACCERT Output Analyzer - ACCERT-Viewer</h1>
+            <h1 class="header-title">ACCERT Output Analyzer - ACCERT-Plus</h1>
             <p class="header-credit">Developed by Daeho Chang, Argonne National Laboratory</p>
         </div>
         <div class="navigation-links">
@@ -619,9 +701,9 @@
         </div>
     </div>
 
-    <!-- Primary Cost Metrics -->
+    <!-- Combined Cost Metrics -->
     <div class="metrics-summary" id="metricsSummary" style="display: none;">
-        <div class="metric-card">
+        <div class="metric-card total-cost-card">
             <div class="metric-value" id="totalCost">$0</div>
             <div class="metric-label">Total Cost</div>
         </div>
@@ -637,10 +719,6 @@
             <div class="metric-value" id="avgCostPerAccount">$0</div>
             <div class="metric-label">Average Per Account</div>
         </div>
-    </div>
-
-    <!-- Power Output & Efficiency Metrics -->
-    <div class="metrics-summary secondary-metrics" id="secondaryMetrics" style="display: none;">
         <div class="metric-card">
             <div class="metric-value" id="electricalOutput">-- MW</div>
             <div class="metric-label">Electrical Output</div>
@@ -760,6 +838,64 @@
             let hierarchicalData = {};
             let sortColumn = -1;
             let errorLogEntries = [];
+
+            // Dynamic value formatting function
+            function formatValue(value, includeSymbol = true) {
+                if (value === 0 || isNaN(value)) {
+                    return includeSymbol ? '$0' : '0';
+                }
+                
+                const absValue = Math.abs(value);
+                let formattedValue, unit, suffix;
+                
+                if (absValue >= 1000000000) {
+                    // Billions
+                    formattedValue = (value / 1000000000).toFixed(2);
+                    unit = 'billion';
+                    suffix = 'B';
+                } else if (absValue >= 1000000) {
+                    // Millions
+                    formattedValue = (value / 1000000).toFixed(2);
+                    unit = 'million';
+                    suffix = 'M';
+                } else if (absValue >= 1000) {
+                    // Thousands
+                    formattedValue = (value / 1000).toFixed(2);
+                    unit = 'thousand';
+                    suffix = 'K';
+                } else {
+                    // Less than thousands - show as actual dollars
+                    formattedValue = value.toFixed(2);
+                    unit = 'dollar';
+                    suffix = '';
+                }
+                
+                // Remove unnecessary trailing zeros and decimal point
+                formattedValue = parseFloat(formattedValue).toString();
+                
+                if (includeSymbol) {
+                    return `$${formattedValue}${suffix}`;
+                } else {
+                    return `${formattedValue}${suffix}`;
+                }
+            }
+
+            // Get appropriate unit for display purposes
+            function getDisplayUnit(values) {
+                if (!Array.isArray(values) || values.length === 0) return 'dollars';
+                
+                const maxValue = Math.max(...values.map(v => Math.abs(v)));
+                
+                if (maxValue >= 1000000000) {
+                    return 'billions';
+                } else if (maxValue >= 1000000) {
+                    return 'millions';
+                } else if (maxValue >= 1000) {
+                    return 'thousands';
+                } else {
+                    return 'dollars';
+                }
+            }
 
             // Error Logging System
             function logError(errorType, details = {}) {
@@ -1069,13 +1205,9 @@
                 return grouped;
             }
 
-            // Smart formatting function for large numbers
+            // Use the dynamic formatValue function instead of formatCurrency
             function formatCurrency(value) {
-                if (value >= 1000) {
-                    return `$${(value / 1000).toFixed(2)}B`;
-                } else {
-                    return `$${value.toFixed(2)}M`;
-                }
+                return formatValue(value);
             }
 
             // Global variable to store raw file content
@@ -1164,14 +1296,24 @@
                 if (powerData.electricalMW > 0) {
                     const electricalOutputKW = powerData.electricalMW * 1000;
                     const costPerKW = totalCost / electricalOutputKW;
-                    document.getElementById('costPerKW').textContent = `$${costPerKW.toFixed(2)}/kW`;
+                    
+                    // Always format as $/kW but with appropriate scaling for large numbers
+                    let costPerKWText;
+                    if (costPerKW >= 1000) {
+                        // For very high costs, show with K, M, B scaling but keep /kW unit
+                        costPerKWText = `${formatValue(costPerKW, false)}/kW`;
+                    } else {
+                        // For costs under $1000/kW, show standard format
+                        costPerKWText = `$${costPerKW.toFixed(2)}/kW`;
+                    }
+                    
+                    document.getElementById('costPerKW').textContent = costPerKWText;
                 } else {
                     document.getElementById('costPerKW').textContent = '-- /kW';
                 }
                 
-                // Show both metrics summary sections and make upload section compact
+                // Show metrics summary and make upload section compact
                 metricsSummary.style.display = 'grid';
-                document.getElementById('secondaryMetrics').style.display = 'grid';
                 document.querySelector('.upload-section').classList.add('compact');
             }
 

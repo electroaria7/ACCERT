@@ -11,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" 
           content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
-    <title>ACCERT-Viewer: AHTR Cost Analysis</title>
+    <title>ACCERT-Plus: AHTR Cost Analysis</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js" 
             crossorigin="anonymous"></script>
     <style>
@@ -472,9 +472,11 @@
         }
         .metrics-summary {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: 600px 1fr 1fr 1fr; /* Fixed width for total cost, flexible for others */
+            grid-template-rows: auto auto;
             gap: 15px;
             margin-bottom: 20px;
+            align-items: stretch;
         }
         .metric-card {
             background: white;
@@ -482,6 +484,54 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             text-align: center;
+        }
+        
+        /* Total Cost Card - spans 2 rows on the left */
+        .total-cost-card {
+            grid-row: 1 / 3;
+            grid-column: 1 / 2;
+            min-height: 250px;
+            padding: 40px 30px;
+            border: 3px solid #3498db;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        /* Other metric cards positioned in 3x2 grid on the right */
+        .metrics-summary .metric-card:nth-child(2) {
+            grid-row: 1 / 2;
+            grid-column: 2 / 3;
+        }
+        .metrics-summary .metric-card:nth-child(3) {
+            grid-row: 1 / 2;
+            grid-column: 3 / 4;
+        }
+        .metrics-summary .metric-card:nth-child(4) {
+            grid-row: 1 / 2;
+            grid-column: 4 / 5;
+        }
+        .metrics-summary .metric-card:nth-child(5) {
+            grid-row: 2 / 3;
+            grid-column: 2 / 3;
+        }
+        .metrics-summary .metric-card:nth-child(6) {
+            grid-row: 2 / 3;
+            grid-column: 3 / 4;
+        }
+        .metrics-summary .metric-card:nth-child(7) {
+            grid-row: 2 / 3;
+            grid-column: 4 / 5;
+        }
+        
+        /* Enhanced styling for total cost card */
+        .total-cost-card .metric-value {
+            font-size: 3.5em;
+            color: #2c3e50;
+        }
+        .total-cost-card .metric-label {
+            font-size: 1.1em;
+            color: #34495e;
         }
         .metric-value {
             font-size: 2.2em;
@@ -499,24 +549,56 @@
             letter-spacing: 0.5px;
         }
         
-        /* Add icons to primary metric cards */
-        .metrics-summary:not(.secondary-metrics) .metric-card:nth-child(1) .metric-value::before { content: "💰 "; }
-        .metrics-summary:not(.secondary-metrics) .metric-card:nth-child(2) .metric-value::before { content: "🏗️ "; }
-        .metrics-summary:not(.secondary-metrics) .metric-card:nth-child(3) .metric-value::before { content: "👷 "; }
-        .metrics-summary:not(.secondary-metrics) .metric-card:nth-child(4) .metric-value::before { content: "🏭 "; }
-        .metrics-summary:not(.secondary-metrics) .metric-card:nth-child(5) .metric-value::before { content: "📊 "; }
-        
-        /* Add icons to secondary metric cards */
-        .secondary-metrics .metric-card:nth-child(1) .metric-value::before { content: "⚡ "; }
-        .secondary-metrics .metric-card:nth-child(2) .metric-value::before { content: "🔥 "; }
-        .secondary-metrics .metric-card:nth-child(3) .metric-value::before { content: "💲 "; }
-        
-        /* Secondary metrics styling */
-        .secondary-metrics {
-            margin-top: 15px;
-            border-top: 2px solid #ecf0f1;
-            padding-top: 15px;
+        /* Responsive layout for smaller screens */
+        @media (max-width: 1200px) {
+            .metrics-summary {
+                grid-template-columns: 500px 1fr 1fr; /* Smaller but still wider total cost card */
+                grid-template-rows: auto auto auto;
+            }
+            
+            .total-cost-card {
+                grid-row: 1 / 3 !important;
+                grid-column: 1 / 2 !important;
+                min-height: 200px !important;
+            }
+            
+            .metrics-summary .metric-card:nth-child(2) { grid-row: 1; grid-column: 2; }
+            .metrics-summary .metric-card:nth-child(3) { grid-row: 1; grid-column: 3; }
+            .metrics-summary .metric-card:nth-child(4) { grid-row: 2; grid-column: 2; }
+            .metrics-summary .metric-card:nth-child(5) { grid-row: 2; grid-column: 3; }
+            .metrics-summary .metric-card:nth-child(6) { grid-row: 3; grid-column: 2; }
+            .metrics-summary .metric-card:nth-child(7) { grid-row: 3; grid-column: 3; }
         }
+        
+        @media (max-width: 768px) {
+            .metrics-summary {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(7, auto);
+            }
+            
+            .total-cost-card {
+                grid-row: 1 / 2 !important;
+                grid-column: 1 / 2 !important;
+                min-height: 150px !important;
+            }
+            
+            .metrics-summary .metric-card:nth-child(2) { grid-row: 2; grid-column: 1; }
+            .metrics-summary .metric-card:nth-child(3) { grid-row: 3; grid-column: 1; }
+            .metrics-summary .metric-card:nth-child(4) { grid-row: 4; grid-column: 1; }
+            .metrics-summary .metric-card:nth-child(5) { grid-row: 5; grid-column: 1; }
+            .metrics-summary .metric-card:nth-child(6) { grid-row: 6; grid-column: 1; }
+            .metrics-summary .metric-card:nth-child(7) { grid-row: 7; grid-column: 1; }
+        }
+        
+        /* Add icons to metric cards */
+        .metrics-summary .metric-card:nth-child(1) .metric-value::before { content: "💰 "; }
+        .metrics-summary .metric-card:nth-child(2) .metric-value::before { content: "🏗️ "; }
+        .metrics-summary .metric-card:nth-child(3) .metric-value::before { content: "👷 "; }
+        .metrics-summary .metric-card:nth-child(4) .metric-value::before { content: "🏭 "; }
+        .metrics-summary .metric-card:nth-child(5) .metric-value::before { content: "📊 "; }
+        .metrics-summary .metric-card:nth-child(6) .metric-value::before { content: "⚡ "; }
+        .metrics-summary .metric-card:nth-child(7) .metric-value::before { content: "🔥 "; }
+        .metrics-summary .metric-card:nth-child(8) .metric-value::before { content: "💲 "; }
         
         /* Tooltip styling for cost breakdowns */
         .cost-tooltip {
@@ -558,7 +640,7 @@
     <div class="header-container">
         <img src="argonne logo.png" alt="Argonne National Laboratory" class="header-logo">
         <div class="header-text">
-            <h1 class="header-title">AHTR Cost Analysis - ACCERT-Viewer</h1>
+            <h1 class="header-title">AHTR Cost Analysis - ACCERT-Plus</h1>
             <p class="header-credit">Developed by Daeho Chang, Argonne National Laboratory</p>
         </div>
         <div class="navigation-links">
@@ -576,9 +658,9 @@
         </div>
     </div>
 
-    <!-- Primary Cost Metrics -->
+    <!-- Combined Cost Metrics -->
     <div class="metrics-summary" id="metricsSummary" style="display: none;">
-        <div class="metric-card">
+        <div class="metric-card total-cost-card">
             <div class="metric-value" id="totalCost">$0</div>
             <div class="metric-label">Total Cost</div>
         </div>
@@ -594,14 +676,6 @@
             <div class="metric-value" id="totalFactory">$0</div>
             <div class="metric-label">Total Factory Cost</div>
         </div>
-        <div class="metric-card">
-            <div class="metric-value" id="itemCount">0</div>
-            <div class="metric-label">Number of Items</div>
-        </div>
-    </div>
-
-    <!-- Power Output & Efficiency Metrics -->
-    <div class="metrics-summary secondary-metrics" id="secondaryMetrics" style="display: none;">
         <div class="metric-card">
             <div class="metric-value" id="electricalOutput">1530 MW</div>
             <div class="metric-label">Electrical Output</div>
@@ -725,6 +799,64 @@
             let totalChartInstance = null;
             let selectedCategories = new Set();
 
+            // Dynamic value formatting function
+            function formatValue(value, includeSymbol = true) {
+                if (value === 0 || isNaN(value)) {
+                    return includeSymbol ? '$0' : '0';
+                }
+                
+                const absValue = Math.abs(value);
+                let formattedValue, unit, suffix;
+                
+                if (absValue >= 1000000000) {
+                    // Billions
+                    formattedValue = (value / 1000000000).toFixed(2);
+                    unit = 'billion';
+                    suffix = 'B';
+                } else if (absValue >= 1000000) {
+                    // Millions
+                    formattedValue = (value / 1000000).toFixed(2);
+                    unit = 'million';
+                    suffix = 'M';
+                } else if (absValue >= 1000) {
+                    // Thousands
+                    formattedValue = (value / 1000).toFixed(2);
+                    unit = 'thousand';
+                    suffix = 'K';
+                } else {
+                    // Less than thousands - show as actual dollars
+                    formattedValue = value.toFixed(2);
+                    unit = 'dollar';
+                    suffix = '';
+                }
+                
+                // Remove unnecessary trailing zeros and decimal point
+                formattedValue = parseFloat(formattedValue).toString();
+                
+                if (includeSymbol) {
+                    return `$${formattedValue}${suffix}`;
+                } else {
+                    return `${formattedValue}${suffix}`;
+                }
+            }
+
+            // Get appropriate unit for display purposes
+            function getDisplayUnit(values) {
+                if (!Array.isArray(values) || values.length === 0) return 'dollars';
+                
+                const maxValue = Math.max(...values.map(v => Math.abs(v)));
+                
+                if (maxValue >= 1000000000) {
+                    return 'billions';
+                } else if (maxValue >= 1000000) {
+                    return 'millions';
+                } else if (maxValue >= 1000) {
+                    return 'thousands';
+                } else {
+                    return 'dollars';
+                }
+            }
+
             function processCSVData(csvText) {
                 const lines = csvText.split('\n');
                 const headers = lines[0].split(',').map(h => h.trim());
@@ -752,14 +884,14 @@
                         // Use placeholder for empty item descriptions
                         const itemDescription = item || '[No description]';
                         
-                        // Values are already in dollars, convert to thousands for consistency with original code
+                        // Values are now in actual dollars, store as-is for dynamic formatting
                         const scaledData = {
                             'Account No.': accountNo,
                             'Item': itemDescription,
-                            'Materials': materialCost / 1000, // Convert to thousands
-                            'Labor': laborCost / 1000, // Convert to thousands  
-                            'Total': totalCost / 1000, // Convert to thousands
-                            'Factory Cost': factoryCost / 1000, // Convert to thousands
+                            'Factory Cost': factoryCost,
+                            'Materials': materialCost,
+                            'Labor': laborCost,
+                            'Total': totalCost,
                             'Category': categorizeAccount(accountNo),
                             'Subcategory': createSubcategory(accountNo, item),
                             'Level': getAccountLevel(accountNo),
@@ -911,8 +1043,8 @@
                     parentAccount: parentAccount,
                     materialPercent: materialPercent,
                     laborPercent: laborPercent,
-                    parentMaterialTotal: (totalMaterials / 1000).toFixed(1),
-                    parentLaborTotal: (totalLabor / 1000).toFixed(1)
+                    parentMaterialTotal: formatValue(totalMaterials, false),
+                    parentLaborTotal: formatValue(totalLabor, false)
                 };
             }
 
@@ -927,10 +1059,10 @@
                 return {
                     'Account No.': accountNo,
                     'Item': `${categoryName} (Summary)`,
+                    'Factory Cost': 0,
                     'Materials': 0,
                     'Labor': 0,
                     'Total': 0,
-                    'Factory Cost': 0,
                     'Category': categoryName,
                     'Subcategory': 'Summary',
                     'Level': getAccountLevel(accountNo),
@@ -1071,45 +1203,47 @@
                     <div class="group-header" onclick="toggleHierarchicalNode('${accountNo}')" style="padding-left: ${depth * 20}px;">
                         <span style="font-family: monospace; margin-right: 8px;">${expandIcon}</span>
                         <span>${node.data['Account No.']} - ${node.data['Item'] || '[No description]'}</span>
-                        <span class="group-summary">$${((node.data['Total'] || 0) / 1000).toFixed(1)}M</span>
+                        <span class="group-summary">${formatValue(node.data['Total'])}</span>
                     </div>
                 `;
                 row.appendChild(accountCell);
                 
                 // Materials
                 const materialsCell = document.createElement('td');
-                materialsCell.textContent = `$${((node.data['Materials'] || 0) / 1000).toFixed(1)}M`;
+                materialsCell.textContent = formatValue(node.data['Materials']);
                 
                 // Add tooltip for materials if percentage data is available
                 const hierarchicalPercentages = calculateAccountPercentages(node.data['Account No.'], node.data, tableData);
                 if (hierarchicalPercentages) {
                     materialsCell.className = 'cost-tooltip';
                     materialsCell.setAttribute('data-tooltip', 
-                        `Account ${hierarchicalPercentages.parentAccount} Materials: ${hierarchicalPercentages.materialPercent}% of $${hierarchicalPercentages.parentMaterialTotal}M`);
+                        `Account ${hierarchicalPercentages.parentAccount} Materials: ${hierarchicalPercentages.materialPercent}% of $${hierarchicalPercentages.parentMaterialTotal}`);
                 }
                 row.appendChild(materialsCell);
                 
+                // Factory Cost
+                const factoryCell = document.createElement('td');
+                factoryCell.textContent = formatValue(node.data['Factory Cost']);
+                row.appendChild(factoryCell);
+                
                 // Labor
                 const laborCell = document.createElement('td');
-                laborCell.textContent = `$${((node.data['Labor'] || 0) / 1000).toFixed(1)}M`;
+                laborCell.textContent = formatValue(node.data['Labor']);
                 
                 // Add tooltip for labor if percentage data is available
                 if (hierarchicalPercentages) {
                     laborCell.className = 'cost-tooltip';
                     laborCell.setAttribute('data-tooltip', 
-                        `Account ${hierarchicalPercentages.parentAccount} Labor: ${hierarchicalPercentages.laborPercent}% of $${hierarchicalPercentages.parentLaborTotal}M`);
+                        `Account ${hierarchicalPercentages.parentAccount} Labor: ${hierarchicalPercentages.laborPercent}% of $${hierarchicalPercentages.parentLaborTotal}`);
                 }
                 row.appendChild(laborCell);
                 
                 // Total
                 const totalCell = document.createElement('td');
-                totalCell.textContent = `$${((node.data['Total'] || 0) / 1000).toFixed(1)}M`;
+                totalCell.textContent = formatValue(node.data['Total']);
                 row.appendChild(totalCell);
                 
-                // Factory Cost
-                const factoryCell = document.createElement('td');
-                factoryCell.textContent = `$${((node.data['Factory Cost'] || 0) / 1000).toFixed(1)}M`;
-                row.appendChild(factoryCell);
+
                 
                 // Materials %
                 const materialsPercentCell = document.createElement('td');
@@ -1165,21 +1299,29 @@
                 const totalMaterials = tableData.reduce((sum, row) => sum + row['Materials'], 0);
                 const totalLabor = tableData.reduce((sum, row) => sum + row['Labor'], 0);
                 const totalFactory = tableData.reduce((sum, row) => sum + row['Factory Cost'], 0);
-                const itemCount = tableData.length;
                 
-                document.getElementById('totalCost').textContent = `$${(totalCost / 1000).toFixed(1)}M`;
-                document.getElementById('totalMaterials').textContent = `$${(totalMaterials / 1000).toFixed(1)}M`;
-                document.getElementById('totalLabor').textContent = `$${(totalLabor / 1000).toFixed(1)}M`;
-                document.getElementById('totalFactory').textContent = `$${(totalFactory / 1000).toFixed(1)}M`;
-                document.getElementById('itemCount').textContent = itemCount;
+                document.getElementById('totalCost').textContent = formatValue(totalCost);
+                document.getElementById('totalMaterials').textContent = formatValue(totalMaterials);
+                document.getElementById('totalLabor').textContent = formatValue(totalLabor);
+                document.getElementById('totalFactory').textContent = formatValue(totalFactory);
                 
                 // Calculate cost per kW (electrical output is 1530 MW)
                 const electricalOutputKW = 1530 * 1000; // 1530 MW = 1,530,000 kW
                 const costPerKW = totalCost / electricalOutputKW;
-                document.getElementById('costPerKW').textContent = `$${costPerKW.toFixed(2)}/kW`;
+                
+                // Always format as $/kW but with appropriate scaling for large numbers
+                let costPerKWText;
+                if (costPerKW >= 1000) {
+                    // For very high costs, show with K, M, B scaling but keep /kW unit
+                    costPerKWText = `${formatValue(costPerKW, false)}/kW`;
+                } else {
+                    // For costs under $1000/kW, show standard format
+                    costPerKWText = `$${costPerKW.toFixed(2)}/kW`;
+                }
+                
+                document.getElementById('costPerKW').textContent = costPerKWText;
                 
                 metricsSummary.style.display = 'grid';
-                document.getElementById('secondaryMetrics').style.display = 'grid';
             }
 
             function groupDataByCategory(data) {
@@ -1233,31 +1375,33 @@
                     categoryCell.innerHTML = `
                         <div class="group-header" onclick="toggleGroup('${category}')">
                             <span>${category}</span>
-                            <span class="group-summary">$${(group.totalCost / 1000).toFixed(1)}M</span>
+                            <span class="group-summary">${formatValue(group.totalCost)}</span>
                         </div>
                     `;
                     headerRow.appendChild(categoryCell);
                     
                     // Materials
                     const materialsCell = document.createElement('td');
-                    materialsCell.textContent = `$${(group.totalMaterials / 1000).toFixed(1)}M`;
+                    materialsCell.textContent = formatValue(group.totalMaterials);
                     headerRow.appendChild(materialsCell);
-                    
-                    // Labor
-                    const laborCell = document.createElement('td');
-                    laborCell.textContent = `$${(group.totalLabor / 1000).toFixed(1)}M`;
-                    headerRow.appendChild(laborCell);
-                    
-                    // Total
-                    const totalCell = document.createElement('td');
-                    totalCell.textContent = `$${(group.totalCost / 1000).toFixed(1)}M`;
-                    headerRow.appendChild(totalCell);
                     
                     // Factory Cost (Group Total)
                     const factoryCell = document.createElement('td');
                     const totalFactory = group.children.reduce((sum, child) => sum + (child['Factory Cost'] || 0), 0);
-                    factoryCell.textContent = `$${(totalFactory / 1000).toFixed(1)}M`;
+                    factoryCell.textContent = formatValue(totalFactory);
                     headerRow.appendChild(factoryCell);
+                    
+                    // Labor
+                    const laborCell = document.createElement('td');
+                    laborCell.textContent = formatValue(group.totalLabor);
+                    headerRow.appendChild(laborCell);
+                    
+                    // Total
+                    const totalCell = document.createElement('td');
+                    totalCell.textContent = formatValue(group.totalCost);
+                    headerRow.appendChild(totalCell);
+                    
+
                     
                     // Materials %
                     const materialsPercentCell = document.createElement('td');
@@ -1314,38 +1458,40 @@
                         
                         // Materials
                         const childMaterialsCell = document.createElement('td');
-                        childMaterialsCell.textContent = `$${(child['Materials'] / 1000).toFixed(2)}M`;
+                        childMaterialsCell.textContent = formatValue(child['Materials']);
                         
                         // Add tooltip for materials if percentage data is available
                         const childPercentages = calculateAccountPercentages(child['Account No.'], child, group.children);
                         if (childPercentages) {
                             childMaterialsCell.className = 'cost-tooltip';
                             childMaterialsCell.setAttribute('data-tooltip', 
-                                `Account ${childPercentages.parentAccount} Materials: ${childPercentages.materialPercent}% of $${childPercentages.parentMaterialTotal}M`);
+                                `Account ${childPercentages.parentAccount} Materials: ${childPercentages.materialPercent}% of $${childPercentages.parentMaterialTotal}`);
                         }
                         childRow.appendChild(childMaterialsCell);
                         
+                        // Factory Cost
+                        const childFactoryCell = document.createElement('td');
+                        childFactoryCell.textContent = formatValue(child['Factory Cost']);
+                        childRow.appendChild(childFactoryCell);
+                        
                         // Labor
                         const childLaborCell = document.createElement('td');
-                        childLaborCell.textContent = `$${(child['Labor'] / 1000).toFixed(2)}M`;
+                        childLaborCell.textContent = formatValue(child['Labor']);
                         
                         // Add tooltip for labor if percentage data is available
                         if (childPercentages) {
                             childLaborCell.className = 'cost-tooltip';
                             childLaborCell.setAttribute('data-tooltip', 
-                                `Account ${childPercentages.parentAccount} Labor: ${childPercentages.laborPercent}% of $${childPercentages.parentLaborTotal}M`);
+                                `Account ${childPercentages.parentAccount} Labor: ${childPercentages.laborPercent}% of $${childPercentages.parentLaborTotal}`);
                         }
                         childRow.appendChild(childLaborCell);
                         
                         // Total
                         const childTotalCell = document.createElement('td');
-                        childTotalCell.textContent = `$${(child['Total'] / 1000).toFixed(2)}M`;
+                        childTotalCell.textContent = formatValue(child['Total']);
                         childRow.appendChild(childTotalCell);
                         
-                        // Factory Cost
-                        const childFactoryCell = document.createElement('td');
-                        childFactoryCell.textContent = `$${(child['Factory Cost'] / 1000).toFixed(2)}M`;
-                        childRow.appendChild(childFactoryCell);
+
                         
                         // Materials %
                         const childMaterialsPercentCell = document.createElement('td');
@@ -1419,41 +1565,43 @@
                     // Materials
                     const materialsCell = document.createElement('td');
                     materialsCell.className = 'cost-column formatted-number';
-                    materialsCell.textContent = `$${(row['Materials'] / 1000).toFixed(2)}M`;
+                    materialsCell.textContent = formatValue(row['Materials']);
                     
                     // Add tooltip for materials if percentage data is available
                     const percentages = calculateAccountPercentages(row['Account No.'], row, data);
                     if (percentages) {
                         materialsCell.classList.add('cost-tooltip');
                         materialsCell.setAttribute('data-tooltip', 
-                            `Account ${percentages.parentAccount} Materials: ${percentages.materialPercent}% of $${percentages.parentMaterialTotal}M`);
+                            `Account ${percentages.parentAccount} Materials: ${percentages.materialPercent}% of $${percentages.parentMaterialTotal}`);
                     }
                     tr.appendChild(materialsCell);
+                    
+                    // Factory Cost
+                    const factoryCell = document.createElement('td');
+                    factoryCell.className = 'cost-column formatted-number';
+                    factoryCell.textContent = formatValue(row['Factory Cost']);
+                    tr.appendChild(factoryCell);
                     
                     // Labor
                     const laborCell = document.createElement('td');
                     laborCell.className = 'cost-column formatted-number';
-                    laborCell.textContent = `$${(row['Labor'] / 1000).toFixed(2)}M`;
+                    laborCell.textContent = formatValue(row['Labor']);
                     
                     // Add tooltip for labor if percentage data is available
                     if (percentages) {
                         laborCell.classList.add('cost-tooltip');
                         laborCell.setAttribute('data-tooltip', 
-                            `Account ${percentages.parentAccount} Labor: ${percentages.laborPercent}% of $${percentages.parentLaborTotal}M`);
+                            `Account ${percentages.parentAccount} Labor: ${percentages.laborPercent}% of $${percentages.parentLaborTotal}`);
                     }
                     tr.appendChild(laborCell);
                     
                     // Total
                     const totalCell = document.createElement('td');
                     totalCell.className = 'cost-column formatted-number';
-                    totalCell.textContent = `$${(row['Total'] / 1000).toFixed(2)}M`;
+                    totalCell.textContent = formatValue(row['Total']);
                     tr.appendChild(totalCell);
                     
-                    // Factory Cost
-                    const factoryCell = document.createElement('td');
-                    factoryCell.className = 'cost-column formatted-number';
-                    factoryCell.textContent = `$${(row['Factory Cost'] / 1000).toFixed(2)}M`;
-                    tr.appendChild(factoryCell);
+
                     
                     // Materials %
                     const materialsPercentCell = document.createElement('td');
@@ -1505,7 +1653,7 @@
                 tableHead.innerHTML = '';
                 const headerRow = document.createElement('tr');
                 
-                const headers = ['Level', 'Account No.', 'Item', 'Materials', 'Labor', 'Total', 'Factory Cost', 'Materials %', 'Labor %', 'Total %', 'Confidence Level', 'Category', 'Subcategory'];
+                const headers = ['Level', 'Account No.', 'Item', 'Factory Cost', 'Materials', 'Labor', 'Total', 'Materials %', 'Labor %', 'Total %', 'Confidence Level', 'Category', 'Subcategory'];
                 
                 headers.forEach((header, index) => {
                     const th = document.createElement('th');
@@ -1839,12 +1987,12 @@
                                             // For grouped bars, show the value and percentage of total
                                             const total = totalData[context.dataIndex];
                                             const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                            return `${context.dataset.label}: $${(value / 1000).toFixed(1)}M (${percentage}%)`;
+                                            return `${context.dataset.label}: ${formatValue(value)} (${percentage}%)`;
                                         } else {
                                             // For single dataset
                                             const total = datasets[0].data.reduce((sum, val) => sum + val, 0);
                                             const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                            return `${context.label}: $${(value / 1000).toFixed(1)}M (${percentage}%)`;
+                                            return `${context.label}: ${formatValue(value)} (${percentage}%)`;
                                         }
                                     }
                                 }
@@ -1898,7 +2046,7 @@
                                             const value = context.parsed;
                                             const total = totalData.reduce((sum, val) => sum + val, 0);
                                             const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                            return `Total: $${(value / 1000).toFixed(1)}M (${percentage}%)`;
+                                            return `Total: ${formatValue(value)} (${percentage}%)`;
                                         }
                                     }
                                 }
@@ -1923,10 +2071,10 @@
                     const totalMaterials = datasets[0].data.reduce((sum, val) => sum + val, 0);
                     const totalLabor = datasets[1] ? datasets[1].data.reduce((sum, val) => sum + val, 0) : 0;
                     const totalCost = totalMaterials + totalLabor;
-                    chartInfo.textContent = `Showing Materials vs Labor breakdown by ${chartBy} for ${accountText}. Total: $${(totalCost / 1000).toFixed(1)}M (Materials: $${(totalMaterials / 1000).toFixed(1)}M, Labor: $${(totalLabor / 1000).toFixed(1)}M)`;
+                    chartInfo.textContent = `Showing Materials vs Labor breakdown by ${chartBy} for ${accountText}. Total: ${formatValue(totalCost)} (Materials: ${formatValue(totalMaterials)}, Labor: ${formatValue(totalLabor)})`;
                 } else {
                     const total = datasets[0].data.reduce((sum, val) => sum + val, 0);
-                    chartInfo.textContent = `Showing ${costType} cost breakdown by ${chartBy} for ${accountText}. Total: $${(total / 1000).toFixed(1)}M`;
+                    chartInfo.textContent = `Showing ${costType} cost breakdown by ${chartBy} for ${accountText}. Total: ${formatValue(total)}`;
                 }
             }
 
@@ -2059,7 +2207,7 @@
             refreshChartBtn.addEventListener('click', createChart);
 
             downloadBtn.addEventListener('click', function() {
-                const headers = ['Account No.', 'Item', 'Materials', 'Labor', 'Total', 'Factory Cost', 'Materials %', 'Labor %', 'Total %', 'Category', 'Subcategory'];
+                const headers = ['Account No.', 'Item', 'Factory Cost', 'Materials', 'Labor', 'Total', 'Materials %', 'Labor %', 'Total %', 'Category', 'Subcategory'];
                 
                 // Calculate totals for percentage calculations
                 const totalMaterials = filteredData.reduce((sum, row) => sum + row['Materials'], 0);
@@ -2076,10 +2224,10 @@
                         const values = [
                             row['Account No.'],
                             row['Item'],
+                            row['Factory Cost'],
                             row['Materials'],
                             row['Labor'],
                             row['Total'],
-                            row['Factory Cost'],
                             materialsPercent.toFixed(2),
                             laborPercent.toFixed(2),
                             totalPercent.toFixed(2),
