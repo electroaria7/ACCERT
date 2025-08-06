@@ -1273,19 +1273,23 @@
             function updateMetrics() {
                 if (tableData.length === 0) return;
                 
-                const totalCost = tableData.reduce((sum, row) => {
+                // ACCERT cost data is in millions of dollars, so convert to actual dollars
+                const totalCostInMillions = tableData.reduce((sum, row) => {
                     return sum + (parseFloat(row.total_cost) || 0);
                 }, 0);
+                
+                // Convert from millions to actual dollars for calculations
+                const totalCostInDollars = totalCostInMillions * 1000000;
                 
                 const totalAccounts = tableData.length;
                 const levels = new Set(tableData.map(row => getLevelFromCode(row.code_of_account)));
                 const levelCount = levels.size;
-                const avgCostPerAccount = totalAccounts > 0 ? totalCost / totalAccounts : 0;
+                const avgCostPerAccountInDollars = totalAccounts > 0 ? totalCostInDollars / totalAccounts : 0;
                 
-                document.getElementById('totalCost').textContent = formatCurrency(totalCost);
+                document.getElementById('totalCost').textContent = formatCurrency(totalCostInDollars);
                 document.getElementById('totalAccounts').textContent = totalAccounts;
                 document.getElementById('levelCount').textContent = levelCount;
-                document.getElementById('avgCostPerAccount').textContent = formatCurrency(avgCostPerAccount);
+                document.getElementById('avgCostPerAccount').textContent = formatCurrency(avgCostPerAccountInDollars);
                 
                 // Extract and display power output from file content
                 const powerData = extractPowerOutput();
@@ -1295,7 +1299,7 @@
                 // Calculate cost per kW if electrical output is available
                 if (powerData.electricalMW > 0) {
                     const electricalOutputKW = powerData.electricalMW * 1000;
-                    const costPerKW = totalCost / electricalOutputKW;
+                    const costPerKW = totalCostInDollars / electricalOutputKW;
                     
                     // Always format as $/kW but with appropriate scaling for large numbers
                     let costPerKWText;
@@ -1643,7 +1647,9 @@
                         strongEl.textContent = `${group.header.code_of_account} - ${description}`;
                         const summarySpan = document.createElement('span');
                         summarySpan.className = 'group-summary';
-                        summarySpan.textContent = `(Cost: ${formatCurrency(group.totalCost)}, Items: ${group.children.length})`;
+                                                    // Convert from millions to actual dollars for display
+                            const groupCostInDollars = group.totalCost * 1000000;
+                            summarySpan.textContent = `(Cost: ${formatCurrency(groupCostInDollars)}, Items: ${group.children.length})`;
                         headerTd.appendChild(strongEl);
                         headerTd.appendChild(document.createTextNode(' '));
                         headerTd.appendChild(summarySpan);
@@ -1791,7 +1797,9 @@
                             const totalCost = accounts.reduce((sum, acc) => sum + (parseFloat(acc.total_cost) || 0), 0);
                             
                                                          const optgroup = document.createElement('optgroup');
-                             optgroup.label = `${parentKey} - ${parentDescription} (${accounts.length} subaccounts, ${formatCurrency(totalCost)}) [Click to select all]`;
+                             // Convert total cost from millions to actual dollars for display
+                            const totalCostInDollars = totalCost * 1000000;
+                            optgroup.label = `${parentKey} - ${parentDescription} (${accounts.length} subaccounts, ${formatCurrency(totalCostInDollars)}) [Click to select all]`;
                              optgroup.style.cursor = 'pointer';
                              optgroup.style.fontWeight = 'bold';
                              optgroup.style.color = '#2980b9';
@@ -1806,7 +1814,9 @@
                                 
                                 const description = getAccountDescription(row);
                                 const cost = parseFloat(row.total_cost) || 0;
-                                const costDisplay = formatCurrency(cost);
+                                // Convert from millions to actual dollars for display
+                                const costInDollars = cost * 1000000;
+                                const costDisplay = formatCurrency(costInDollars);
                                 const parentCost = parentAccount ? parseFloat(parentAccount.total_cost) || 0 : totalCost;
                                 const percentage = parentCost > 0 ? ((cost / parentCost) * 100).toFixed(1) : '0.0';
                                 
@@ -1823,7 +1833,9 @@
                             
                             const description = getAccountDescription(row);
                             const cost = parseFloat(row.total_cost) || 0;
-                            const costDisplay = formatCurrency(cost);
+                            // Convert from millions to actual dollars for display
+                            const costInDollars = cost * 1000000;
+                            const costDisplay = formatCurrency(costInDollars);
                             
                             // Standard display for ungrouped accounts
                             option.textContent = `${row.code_of_account} - ${description} (${costDisplay})`;
@@ -1958,7 +1970,7 @@
                     return;
                 }
                 
-                // Calculate level totals for percentage calculations
+                // Calculate level totals for percentage calculations (in millions)
                 const levelTotals = {};
                 tableData.forEach(row => {
                     const level = getLevelFromCode(row.code_of_account);
@@ -1978,20 +1990,24 @@
                     
                     return `${row.code_of_account}: ${description} (${levelPercentage}% of Level ${accountLevel})`;
                 });
-                const costs = dataToChart.map(row => parseFloat(row.total_cost) || 0);
+                // Convert costs from millions to actual dollars for chart display
+                const costs = dataToChart.map(row => (parseFloat(row.total_cost) || 0) * 1000000);
                 const totalCost = costs.reduce((sum, cost) => sum + cost, 0);
                 
                 // Update chart info with level context
                 const selectedLevelTotal = levelTotals[selectedLevel] || 0;
-                const selectedAsPercentOfLevel = selectedLevelTotal > 0 ? ((totalCost / selectedLevelTotal) * 100).toFixed(1) : '0.0';
+                // Convert level totals to actual dollars for percentage calculations
+                const selectedLevelTotalInDollars = selectedLevelTotal * 1000000;
+                const selectedAsPercentOfLevel = selectedLevelTotalInDollars > 0 ? ((totalCost / selectedLevelTotalInDollars) * 100).toFixed(1) : '0.0';
                 const allLevelsTotal = Object.values(levelTotals).reduce((sum, val) => sum + val, 0);
-                const selectedAsPercentOfAll = allLevelsTotal > 0 ? ((totalCost / allLevelsTotal) * 100).toFixed(1) : '0.0';
+                const allLevelsTotalInDollars = allLevelsTotal * 1000000;
+                const selectedAsPercentOfAll = allLevelsTotalInDollars > 0 ? ((totalCost / allLevelsTotalInDollars) * 100).toFixed(1) : '0.0';
                 
                 chartInfo.innerHTML = `
                     <strong>Chart Data:</strong> ${dataToChart.length} accounts, 
                     <strong>Total Cost:</strong> ${formatCurrency(totalCost)}, 
                     <strong>Level:</strong> ${selectedLevel} | 
-                    <strong>Level Coverage:</strong> ${selectedAsPercentOfLevel}% of Level ${selectedLevel} (${formatCurrency(selectedLevelTotal)}) | 
+                    <strong>Level Coverage:</strong> ${selectedAsPercentOfLevel}% of Level ${selectedLevel} (${formatCurrency(selectedLevelTotalInDollars)}) | 
                     <strong>Overall:</strong> ${selectedAsPercentOfAll}% of all data
                 `;
                 
@@ -2033,9 +2049,10 @@
                                         const accountCode = dataToChart[context.dataIndex].code_of_account;
                                         const accountLevel = getLevelFromCode(accountCode);
                                         const levelTotal = levelTotals[accountLevel] || 0;
+                                        const levelTotalInDollars = levelTotal * 1000000;
                                         const selectedTotal = totalCost;
                                         
-                                        const levelPercentage = levelTotal > 0 ? ((value / levelTotal) * 100).toFixed(1) : '0.0';
+                                        const levelPercentage = levelTotalInDollars > 0 ? ((value / levelTotalInDollars) * 100).toFixed(1) : '0.0';
                                         const selectedPercentage = selectedTotal > 0 ? ((value / selectedTotal) * 100).toFixed(1) : '0.0';
                                         
                                         return [
